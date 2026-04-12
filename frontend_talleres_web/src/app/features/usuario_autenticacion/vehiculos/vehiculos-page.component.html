@@ -1,0 +1,446 @@
+<div class="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <div
+      class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
+    >
+      <div class="flex min-w-0 items-start gap-4">
+        <div
+          class="hidden shrink-0 rounded-xl bg-orange-500/10 p-3 text-orange-600 sm:flex sm:items-center sm:justify-center"
+          aria-hidden="true"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-7 w-7">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9-3H3.375a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125H3.75m16.5 0h.008v.008H20.25V15m0 2.25h.008v.008H20.25M4.5 19.5h15M4.5 5.25l2.303-3.454A2.25 2.25 0 0 1 8.378 1.5h7.244a2.25 2.25 0 0 1 1.875 1.296L19.5 5.25m-15 0h15m-15 0a2.25 2.25 0 0 0-2.25 2.25v6.75A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V7.5a2.25 2.25 0 0 0-2.25-2.25m-15 0V7.5a2.25 2.25 0 0 0 2.25 2.25h10.5A2.25 2.25 0 0 0 19.5 7.5V5.25"
+            />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
+            @if (isAdmin()) {
+              Vehículos registrados
+            } @else {
+              Mis vehículos
+            }
+          </h1>
+          <p class="mt-1 text-sm text-slate-500">
+            @if (isAdmin()) {
+              Consultá y editá los vehículos registrados por los clientes. El alta la hace el cliente. Podés filtrar por ID de usuario.
+            } @else {
+              Registrá, editá, eliminá y listá tus vehículos. La placa debe ser única; no podés eliminar si hay un incidente activo.
+            }
+          </p>
+        </div>
+      </div>
+      @if (!isAdmin()) {
+        <button
+          type="button"
+          (click)="openCreateModal()"
+          class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          Agregar vehículo
+        </button>
+      }
+    </div>
+
+    @if (errorMessage) {
+      <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="mt-0.5 h-5 w-5 shrink-0 text-red-500" aria-hidden="true">
+          <path
+            fill-rule="evenodd"
+            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+    @if (successMessage) {
+      <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800" role="status">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <span>{{ successMessage }}</span>
+      </div>
+    }
+
+    @if (isAdmin()) {
+      <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="flex flex-col gap-4 sm:flex-row sm:items-end">
+          <div class="flex-1">
+            <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="f-id-usuario">Filtrar por ID usuario</label>
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+                />
+              </svg>
+              <input
+                id="f-id-usuario"
+                type="number"
+                min="0"
+                formControlName="idUsuario"
+                placeholder="0 = todos"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+          <button
+            type="submit"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            Aplicar
+          </button>
+        </form>
+      </section>
+    }
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      @if (loading) {
+        <div class="flex items-center justify-center gap-2 px-6 py-16 text-slate-500">
+          <svg class="h-6 w-6 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          Cargando…
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-100 text-left text-sm">
+            <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <tr>
+                <th class="px-4 py-3 sm:px-6">Placa</th>
+                <th class="px-4 py-3 sm:px-6">Marca / modelo</th>
+                <th class="px-4 py-3 sm:px-6">Año</th>
+                <th class="hidden px-4 py-3 sm:table-cell sm:px-6">Color</th>
+                <th class="hidden px-4 py-3 md:table-cell md:px-6">Seguro</th>
+                @if (isAdmin()) {
+                  <th class="hidden px-4 py-3 lg:table-cell lg:px-6">Propietario</th>
+                }
+                <th class="px-4 py-3 text-right sm:px-6">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-slate-700">
+              @for (v of items; track v.id) {
+                <tr class="hover:bg-slate-50/80">
+                  <td class="px-4 py-3 font-mono font-medium text-slate-900 sm:px-6 sm:py-4">{{ v.placa }}</td>
+                  <td class="px-4 py-3 sm:px-6 sm:py-4">
+                    <span class="font-medium">{{ v.marca }}</span>
+                    <span class="text-slate-500"> {{ v.modelo }}</span>
+                  </td>
+                  <td class="px-4 py-3 sm:px-6 sm:py-4">{{ v.anio }}</td>
+                  <td class="hidden px-4 py-3 text-slate-600 sm:table-cell sm:px-6 sm:py-4">{{ v.color ?? '—' }}</td>
+                  <td class="hidden px-4 py-3 text-slate-600 md:table-cell md:px-6 md:py-4">{{ v.tipo_seguro ?? '—' }}</td>
+                  @if (isAdmin()) {
+                    <td class="hidden max-w-[12rem] truncate px-4 py-3 text-slate-600 lg:table-cell lg:px-6 lg:py-4" [title]="v.propietario_email ?? ''">
+                      {{ v.propietario_nombre ?? '—' }}
+                    </td>
+                  }
+                  <td class="px-4 py-3 text-right sm:px-6 sm:py-4">
+                    <div class="flex items-center justify-end gap-0">
+                      <button
+                        type="button"
+                        (click)="openEditModal(v)"
+                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-orange-50 hover:text-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                        aria-label="Editar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18.33l.659-2.63a4.5 4.5 0 0 1 1.13-1.897l9.663-9.663a.375.375 0 0 1 .53 0Z"
+                          />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.5 12 15" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="openDeleteModal(v)"
+                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        aria-label="Eliminar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (items.length === 0) {
+                <tr>
+                  <td [attr.colspan]="isAdmin() ? 7 : 6" class="px-6 py-12 text-center text-slate-500">
+                    <p class="font-medium text-slate-900">No hay vehículos registrados.</p>
+                    <p class="mt-1 text-sm">Agregá uno con el botón superior.</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        >
+          <p class="text-center text-slate-500 sm:text-left">
+            Página <span class="font-medium text-slate-900">{{ page }}</span>
+            <span class="mx-1">—</span>
+            {{ total }} vehículos
+          </p>
+          <div class="flex justify-center gap-2 sm:justify-end">
+            <button
+              type="button"
+              (click)="prevPage()"
+              [disabled]="page <= 1"
+              class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-orange-200 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Anterior
+            </button>
+            <button
+              type="button"
+              (click)="nextPage()"
+              [disabled]="page * pageSize >= total"
+              class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-orange-200 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- Crear -->
+@if (createOpen() && !isAdmin()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="veh-create-title">
+    <button type="button" class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" (click)="closeCreateModal()" aria-label="Cerrar"></button>
+    <div
+      class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div class="flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </span>
+          <div>
+            <h2 id="veh-create-title" class="text-lg font-semibold text-slate-800">Nuevo vehículo</h2>
+            <p class="text-sm text-slate-500">La placa debe ser única en el sistema.</p>
+          </div>
+        </div>
+        <button type="button" (click)="closeCreateModal()" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form [formGroup]="createForm" (ngSubmit)="saveCreate()" class="flex min-h-0 flex-1 flex-col">
+        <div class="space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-placa">Placa</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-.621-1.814L6.75 9h12l1.121 3.436a3 3 0 0 1-.621 1.814m-13.5V18h13.5v-3.75m-13.5 0h13.5m-9-6.75h4.5" />
+              </svg>
+              <input id="cv-placa" formControlName="placa" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm uppercase focus:ring-2 focus:ring-orange-500" placeholder="ABC123" />
+            </div>
+            @if (createForm.get('placa')?.invalid && createForm.get('placa')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Requerido.</p>
+            }
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-marca">Marca</label>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1-.18 1.935c.07.657.43 1.254.98 1.591l1.499.928a1.125 1.125 0 0 1 .522 1.036V20.25a1.125 1.125 0 0 1-1.118 1.125h-2.5c-.472 0-.884-.3-1.032-.74l-.478-1.434c-.123-.37-.44-.645-.83-.688a8.224 8.224 0 0 0-1.662-.123c-.29 0-.578.042-.855.123-.39.043-.707.318-.83.688l-.478 1.434c-.148.44-.56.74-1.032.74h-2.5a1.125 1.125 0 0 1-1.118-1.125v-1.5c0-.472.26-.91.671-1.128l1.499-.928c.55-.337.91-.934.98-1.591a7.723 7.723 0 0 1-.18-1.935c-.008-.379.137-.751.43-.992l1.003-.827c.43-.354.598-.918.26-1.431l-1.296-2.247a1.125 1.125 0 0 0-1.37-.49l-1.217.456c-.355.133-.75.072-1.075-.124a6.57 6.57 0 0 1-.22-.127c-.332-.183-.582-.495-.645-.87L9.594 3.94Z" />
+                </svg>
+                <input id="cv-marca" formControlName="marca" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm focus:ring-2 focus:ring-orange-500" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-modelo">Modelo</label>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9-3H3.375a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125H3.75m16.5 0h.008v.008H20.25V15m0 2.25h.008v.008H20.25M4.5 19.5h15M4.5 5.25l2.303-3.454A2.25 2.25 0 0 1 8.378 1.5h7.244a2.25 2.25 0 0 1 1.875 1.296L19.5 5.25m-15 0h15" />
+                </svg>
+                <input id="cv-modelo" formControlName="modelo" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm focus:ring-2 focus:ring-orange-500" />
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-anio">Año</label>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5" />
+                </svg>
+                <input id="cv-anio" type="number" formControlName="anio" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm focus:ring-2 focus:ring-orange-500" />
+              </div>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-color">Color</label>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.098 19.902a3.75 3.75 0 0 0 5.304 0l6.401-6.402M6.75 21A3.75 3.75 0 0 1 3 17.25V4.125a2.625 2.625 0 0 1 5.25 0v5.25m-5.25 0c-.066 2.251-.216 4.558-.628 6.47M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                </svg>
+                <input id="cv-color" formControlName="color" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm focus:ring-2 focus:ring-orange-500" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-seguro">Tipo de seguro</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+              </svg>
+              <input id="cv-seguro" formControlName="tipo_seguro" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm focus:ring-2 focus:ring-orange-500" placeholder="Ej. Todo riesgo" />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-foto">Foto (URL)</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3A1.5 1.5 0 0 0 1.5 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008H12V8.25Z" />
+              </svg>
+              <input id="cv-foto" formControlName="foto_frontal" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm focus:ring-2 focus:ring-orange-500" placeholder="https://…" />
+            </div>
+          </div>
+          @if (isAdmin()) {
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="cv-owner">ID usuario propietario</label>
+              <input id="cv-owner" type="number" min="1" formControlName="id_usuario" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" placeholder="0 = vos (admin)" />
+            </div>
+          }
+        </div>
+        <div class="flex gap-2 border-t border-slate-100 px-5 py-4 sm:px-6">
+          <button type="button" (click)="closeCreateModal()" class="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+          <button
+            type="submit"
+            [disabled]="createSubmitting"
+            class="flex-1 rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50"
+          >
+            {{ createSubmitting ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Editar -->
+@if (editOpen()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="veh-edit-title">
+    <button type="button" class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" (click)="closeEditModal()" aria-label="Cerrar"></button>
+    <div
+      class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <h2 id="veh-edit-title" class="text-lg font-semibold text-slate-800">Editar vehículo</h2>
+        <button type="button" (click)="closeEditModal()" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100" aria-label="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="flex min-h-0 flex-1 flex-col">
+        <div class="space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-placa">Placa</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 0 1-.621-1.814L6.75 9h12l1.121 3.436a3 3 0 0 1-.621 1.814m-13.5V18h13.5v-3.75m-13.5 0h13.5m-9-6.75h4.5" />
+              </svg>
+              <input id="ev-placa" formControlName="placa" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm uppercase focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-marca">Marca</label>
+              <input id="ev-marca" formControlName="marca" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-modelo">Modelo</label>
+              <input id="ev-modelo" formControlName="modelo" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-anio">Año</label>
+              <input id="ev-anio" type="number" formControlName="anio" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-color">Color</label>
+              <input id="ev-color" formControlName="color" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-seguro">Tipo de seguro</label>
+            <input id="ev-seguro" formControlName="tipo_seguro" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-foto">Foto (URL)</label>
+            <input id="ev-foto" formControlName="foto_frontal" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          @if (isAdmin()) {
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="ev-owner">ID usuario propietario</label>
+              <input id="ev-owner" type="number" min="1" formControlName="id_usuario" class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          }
+        </div>
+        <div class="flex gap-2 border-t border-slate-100 px-5 py-4 sm:px-6">
+          <button type="button" (click)="closeEditModal()" class="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+          <button type="submit" [disabled]="editSubmitting" class="flex-1 rounded-xl bg-orange-500 py-2.5 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-50">
+            {{ editSubmitting ? 'Guardando…' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Eliminar -->
+@if (deleteOpen() && vehiculoToDelete) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="veh-del-title">
+    <button type="button" class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" (click)="closeDeleteModal()" aria-label="Cerrar"></button>
+    <div class="relative z-10 w-full max-w-md rounded-t-2xl border border-slate-200 bg-white p-6 shadow-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
+      <h2 id="veh-del-title" class="text-lg font-semibold text-slate-800">Eliminar vehículo</h2>
+      <p class="mt-2 text-sm text-slate-600">
+        ¿Eliminar <span class="font-mono font-semibold">{{ vehiculoToDelete.placa }}</span>? No podrá eliminarse si tiene un incidente activo.
+      </p>
+      <div class="mt-6 flex gap-2">
+        <button type="button" (click)="closeDeleteModal()" class="flex-1 rounded-xl border border-slate-200 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Cancelar</button>
+        <button
+          type="button"
+          (click)="confirmDelete()"
+          [disabled]="deleteSubmitting"
+          class="flex-1 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+        >
+          {{ deleteSubmitting ? 'Eliminando…' : 'Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

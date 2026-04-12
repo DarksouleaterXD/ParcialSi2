@@ -1,0 +1,287 @@
+<div class="flex min-h-screen bg-slate-100">
+  <aside
+    [ngClass]="sidebarCollapsed() ? 'w-[4.75rem]' : 'w-64'"
+    class="sticky top-0 flex h-screen min-h-0 shrink-0 flex-col border-l-[3px] border-l-orange-500 border-r border-zinc-700/80 bg-gradient-to-b from-zinc-800 via-zinc-900 to-zinc-950 text-zinc-100 shadow-lg shadow-black/20 transition-[width] duration-200 ease-out"
+    aria-label="Navegación principal"
+  >
+    <div class="shrink-0 border-b border-zinc-700/70 px-2 py-3">
+      <div
+        class="flex items-center gap-2"
+        [ngClass]="sidebarCollapsed() ? 'flex-col' : 'justify-between'"
+      >
+        @if (!sidebarCollapsed()) {
+          <div class="flex min-w-0 flex-1 items-center gap-3 px-2">
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-sm font-bold text-white shadow-md shadow-orange-900/30"
+            >
+              E
+            </div>
+            <div class="min-w-0">
+              <p class="truncate text-sm font-semibold tracking-tight text-white">Emergencias</p>
+              <p class="truncate text-xs text-zinc-400">Panel web talleres</p>
+            </div>
+          </div>
+        } @else {
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-sm font-bold text-white shadow-md shadow-orange-900/30"
+            aria-hidden="true"
+          >
+            E
+          </div>
+        }
+        <button
+          type="button"
+          (click)="toggleSidebar()"
+          [attr.aria-expanded]="!sidebarCollapsed()"
+          [attr.aria-label]="sidebarCollapsed() ? 'Expandir menú lateral' : 'Contraer menú lateral'"
+          class="shrink-0 rounded-lg p-2 text-zinc-400 transition hover:bg-zinc-700/80 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+        >
+          @if (sidebarCollapsed()) {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+            </svg>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+            </svg>
+          }
+        </button>
+      </div>
+    </div>
+
+    <nav class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto overflow-x-hidden px-1 py-3">
+      @for (mod of nav; track mod.packageId) {
+        <div class="rounded-lg">
+          @if (!sidebarCollapsed()) {
+            <button
+              type="button"
+              (click)="togglePackage(mod.packageId)"
+              class="flex w-full items-center gap-2 rounded-md px-1 py-2 text-left text-xs font-semibold text-zinc-400 transition hover:bg-zinc-700/45 hover:text-zinc-100"
+              [attr.aria-expanded]="isPackageExpanded(mod.packageId)"
+              [attr.aria-controls]="'nav-pkg-' + mod.packageId"
+            >
+              <span
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-800/90 text-orange-400 shadow-inner shadow-black/20 ring-1 ring-zinc-600/40"
+                aria-hidden="true"
+              >
+                @switch (mod.packageIcon) {
+                  @case ('users') {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+                      />
+                    </svg>
+                  }
+                  @case ('wrench') {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655-5.653a2.548 2.548 0 0 1-.722-1.794V5.25a2.25 2.25 0 0 1 2.25-2.25H13.5a2.25 2.25 0 0 1 2.25 2.25v1.628c0 .218.043.431.122.627l1.101 2.75a2.25 2.25 0 0 1-.957 2.907l-1.84 1.224a2.25 2.25 0 0 1-1.183.33H9.75"
+                      />
+                    </svg>
+                  }
+                  @case ('alert') {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                    </svg>
+                  }
+                  @case ('card') {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                    </svg>
+                  }
+                  @case ('cpu') {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 16.5V21m3.75-18v1.5m0 16.5V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z" />
+                    </svg>
+                  }
+                  @default {
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  }
+                }
+              </span>
+              <span class="min-w-0 flex-1 truncate leading-snug" [attr.title]="mod.title">{{ mod.title }}</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="h-4 w-4 shrink-0 text-zinc-500 transition-transform duration-200"
+                [class.rotate-180]="isPackageExpanded(mod.packageId)"
+                aria-hidden="true"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
+          }
+          @if (sidebarCollapsed() || isPackageExpanded(mod.packageId)) {
+            <div [id]="'nav-pkg-' + mod.packageId" class="space-y-0.5" [class.pl-0]="sidebarCollapsed()" [class.mt-0.5]="!sidebarCollapsed()">
+              @if (mod.comingSoon && !mod.items.length) {
+                <div
+                  class="flex items-center gap-2 rounded-lg px-2 py-2 text-xs italic text-zinc-500"
+                  [class.justify-center]="sidebarCollapsed()"
+                  [class.px-1]="sidebarCollapsed()"
+                  [attr.title]="mod.title + ' — Próximamente'"
+                >
+                  @switch (mod.soonIcon) {
+                    @case ('wrench') {
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655-5.653a2.548 2.548 0 0 1-.722-1.794V5.25a2.25 2.25 0 0 1 2.25-2.25H13.5a2.25 2.25 0 0 1 2.25 2.25v1.628c0 .218.043.431.122.627l1.101 2.75a2.25 2.25 0 0 1-.957 2.907l-1.84 1.224a2.25 2.25 0 0 1-1.183.33H9.75"
+                        />
+                      </svg>
+                    }
+                    @case ('alert') {
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+                      </svg>
+                    }
+                    @case ('card') {
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                      </svg>
+                    }
+                    @case ('cpu') {
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 16.5V21m3.75-18v1.5m0 16.5V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z" />
+                      </svg>
+                    }
+                    @default {
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 shrink-0 text-zinc-500" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                      </svg>
+                    }
+                  }
+                  @if (!sidebarCollapsed()) {
+                    <span>Próximamente</span>
+                  }
+                </div>
+              }
+              @for (item of mod.items; track item.path) {
+                @if (showItem(item)) {
+                  <a
+                    [routerLink]="item.path"
+                    routerLinkActive="bg-orange-600 text-white shadow-md shadow-orange-950/40"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                    [attr.title]="sidebarCollapsed() ? navItemLabel(item) : null"
+                    class="flex items-center gap-3 rounded-lg py-2 text-sm font-medium text-zinc-300 transition hover:bg-zinc-700/80 hover:text-white"
+                    [ngClass]="sidebarCollapsed() ? 'justify-center px-2' : 'px-3'"
+                  >
+                    @switch (item.icon) {
+                      @case ('home') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                        </svg>
+                      }
+                      @case ('users') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+                          />
+                        </svg>
+                      }
+                      @case ('roles') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
+                          />
+                        </svg>
+                      }
+                      @case ('car') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9-3H3.375a1.125 1.125 0 0 1-1.125-1.125v-1.5c0-.621.504-1.125 1.125-1.125H3.75m16.5 0h.008v.008H20.25V15m0 2.25h.008v.008H20.25M4.5 19.5h15M4.5 5.25l2.303-3.454A2.25 2.25 0 0 1 8.378 1.5h7.244a2.25 2.25 0 0 1 1.875 1.296L19.5 5.25m-15 0h15m-15 0a2.25 2.25 0 0 0-2.25 2.25v6.75A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25V7.5a2.25 2.25 0 0 0-2.25-2.25m-15 0V7.5a2.25 2.25 0 0 0 2.25 2.25h10.5A2.25 2.25 0 0 0 19.5 7.5V5.25"
+                          />
+                        </svg>
+                      }
+                    }
+                    @if (!sidebarCollapsed()) {
+                      <span class="truncate">{{ navItemLabel(item) }}</span>
+                    }
+                  </a>
+                }
+              }
+            </div>
+          }
+        </div>
+      }
+    </nav>
+
+    <div class="shrink-0 border-t border-zinc-700/80 bg-zinc-950/50 p-2 pb-3">
+      <button
+        type="button"
+        (click)="logout()"
+        [attr.title]="sidebarCollapsed() ? 'Cerrar sesión' : null"
+        class="flex w-full items-center gap-3 rounded-lg py-2.5 text-left text-sm font-medium text-zinc-200 transition hover:bg-zinc-700/70 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+        [ngClass]="sidebarCollapsed() ? 'justify-center px-2' : 'px-3'"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor"
+          class="h-5 w-5 shrink-0 text-orange-400/90"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+        </svg>
+        @if (!sidebarCollapsed()) {
+          <span>Cerrar sesión</span>
+        }
+      </button>
+    </div>
+  </aside>
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header
+      class="flex h-14 shrink-0 items-center justify-end gap-2 border-b border-slate-200 bg-white px-4 shadow-sm"
+      role="banner"
+    >
+      @if (auth.profile(); as p) {
+        <a
+          routerLink="/perfil"
+          class="flex max-w-[min(100%,20rem)] items-center gap-3 rounded-xl border border-transparent px-2 py-1.5 transition hover:border-slate-200 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+        >
+          @if (p.foto_perfil && !headerAvatarBroken()) {
+            <img
+              [src]="p.foto_perfil"
+              alt=""
+              class="h-9 w-9 shrink-0 rounded-full border border-slate-200 object-cover"
+              (error)="headerAvatarBroken.set(true)"
+            />
+          } @else {
+            <div
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-orange-600 text-xs font-bold text-white shadow-sm shadow-orange-900/20"
+            >
+              {{ userInitials() }}
+            </div>
+          }
+          <div class="min-w-0 text-right">
+            <p class="truncate text-sm font-medium text-slate-800">{{ p.nombre }} {{ p.apellido }}</p>
+            <p class="text-xs font-medium text-orange-600">Mi perfil</p>
+          </div>
+        </a>
+      } @else {
+        <span class="text-xs text-slate-400">Cargando sesión…</span>
+      }
+    </header>
+    <main class="flex-1 overflow-auto">
+      <router-outlet />
+    </main>
+  </div>
+</div>

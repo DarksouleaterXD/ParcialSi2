@@ -1,0 +1,375 @@
+<div class="min-h-screen bg-slate-50">
+  <div class="flex min-h-screen flex-col md:flex-row">
+    <div
+      class="relative hidden min-h-[240px] overflow-hidden bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 md:block md:min-h-screen md:w-1/2"
+      aria-hidden="true"
+    >
+      <div class="absolute inset-0 flex items-center justify-center opacity-30">
+        <svg class="max-h-80 w-full max-w-md text-orange-500" viewBox="0 0 200 200" fill="currentColor">
+          <path
+            d="M30 140 L50 100 L90 110 L130 70 L170 85 L175 140 Z M55 145 h90 v15 H55z M70 125 h60 v12 H70z"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="6"
+            stroke-linejoin="round"
+          />
+          <circle cx="75" cy="155" r="14" fill="#94a3b8" />
+          <circle cx="135" cy="155" r="14" fill="#94a3b8" />
+        </svg>
+      </div>
+      <div class="relative z-10 flex h-full flex-col justify-center px-10 py-12 text-white lg:px-16">
+        <p class="text-sm font-medium uppercase tracking-widest text-amber-400">Nuevo usuario</p>
+        <h1 class="mt-4 text-3xl font-bold leading-tight lg:text-4xl">
+          Registro alineado al modelo <span class="text-amber-400">Usuario</span>
+        </h1>
+        <p class="mt-4 max-w-md text-slate-300">
+          Campos: nombre, apellido, email, teléfono opcional y contraseña (el hash lo genera el backend).
+        </p>
+      </div>
+    </div>
+
+    <div class="flex flex-1 items-center justify-center p-4 sm:p-6 md:p-8">
+      <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl sm:p-8">
+        <h2 class="text-2xl font-semibold tracking-tight text-slate-800">Crear cuenta</h2>
+        <p class="mt-2 text-sm text-slate-500">Completá los datos según la tabla Usuario</p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="mt-8 space-y-4" novalidate>
+          <div>
+            <label for="reg-nombre" class="mb-1.5 block text-sm font-medium text-slate-700">Nombre</label>
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                />
+              </svg>
+              <input
+                id="reg-nombre"
+                type="text"
+                formControlName="nombre"
+                autocomplete="given-name"
+                maxlength="100"
+                class="w-full rounded-xl border-0 bg-slate-100 py-3 pl-11 pr-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Juan"
+              />
+            </div>
+            @if (nombreErrorVisible()) {
+              <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                </svg>
+                @if (form.get('nombre')?.errors?.['required']) {
+                  El nombre es obligatorio.
+                } @else if (form.get('nombre')?.errors?.['maxlength']) {
+                  Máximo 100 caracteres.
+                }
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="reg-apellido" class="mb-1.5 block text-sm font-medium text-slate-700">Apellido</label>
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                />
+              </svg>
+              <input
+                id="reg-apellido"
+                type="text"
+                formControlName="apellido"
+                autocomplete="family-name"
+                maxlength="100"
+                class="w-full rounded-xl border-0 bg-slate-100 py-3 pl-11 pr-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Pérez"
+              />
+            </div>
+            @if (apellidoErrorVisible()) {
+              <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                </svg>
+                @if (form.get('apellido')?.errors?.['required']) {
+                  El apellido es obligatorio.
+                } @else if (form.get('apellido')?.errors?.['maxlength']) {
+                  Máximo 100 caracteres.
+                }
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="reg-email" class="mb-1.5 block text-sm font-medium text-slate-700"
+              >Correo electrónico</label
+            >
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                />
+              </svg>
+              <input
+                id="reg-email"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                maxlength="150"
+                class="w-full rounded-xl border-0 bg-slate-100 py-3 pl-11 pr-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="correo@dominio.com"
+              />
+            </div>
+            @if (emailErrorVisible()) {
+              <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                </svg>
+                @if (form.get('email')?.errors?.['required']) {
+                  Ingresá tu correo.
+                } @else if (form.get('email')?.errors?.['emailInvalid']) {
+                  El formato del correo no es válido.
+                }
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="reg-telefono" class="mb-1.5 block text-sm font-medium text-slate-700"
+              >Teléfono <span class="font-normal text-slate-400">(opcional)</span></label
+            >
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
+                />
+              </svg>
+              <input
+                id="reg-telefono"
+                type="tel"
+                formControlName="telefono"
+                autocomplete="tel"
+                maxlength="20"
+                class="w-full rounded-xl border-0 bg-slate-100 py-3 pl-11 pr-3 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="+54 9 11 0000-0000"
+              />
+            </div>
+            @if (telefonoErrorVisible()) {
+              <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                </svg>
+                Máximo 20 caracteres.
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="reg-password" class="mb-1.5 block text-sm font-medium text-slate-700"
+              >Contraseña</label
+            >
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                />
+              </svg>
+              <input
+                id="reg-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                formControlName="password"
+                autocomplete="new-password"
+                class="w-full rounded-xl border-0 bg-slate-100 py-3 pl-11 pr-12 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Mínimo 8 caracteres"
+              />
+              <button
+                type="button"
+                (click)="togglePassword()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                [attr.title]="showPassword() ? 'Ocultar' : 'Mostrar'"
+              >
+                @if (showPassword()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395m6.228 6.228A10.45 10.45 0 0 1 12 21.75c-4.648 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (passwordErrorVisible()) {
+              <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                </svg>
+                @if (form.get('password')?.errors?.['required']) {
+                  Ingresá una contraseña.
+                } @else if (form.get('password')?.errors?.['minlength']) {
+                  Mínimo 8 caracteres.
+                }
+              </p>
+            }
+          </div>
+
+          <div>
+            <label for="reg-confirm" class="mb-1.5 block text-sm font-medium text-slate-700"
+              >Confirmar contraseña</label
+            >
+            <div class="relative">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                />
+              </svg>
+              <input
+                id="reg-confirm"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                class="w-full rounded-xl border-0 bg-slate-100 py-3 pl-11 pr-12 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Repetí la contraseña"
+              />
+              <button
+                type="button"
+                (click)="toggleConfirmPassword()"
+                class="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                [attr.aria-label]="showConfirmPassword() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                [attr.title]="showConfirmPassword() ? 'Ocultar' : 'Mostrar'"
+              >
+                @if (showConfirmPassword()) {
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395m6.228 6.228A10.45 10.45 0 0 1 12 21.75c-4.648 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21" />
+                  </svg>
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                  </svg>
+                }
+              </button>
+            </div>
+            @if (confirmPasswordErrorVisible()) {
+              <p class="mt-1.5 flex items-center gap-1 text-sm text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4 shrink-0" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+                </svg>
+                @if (form.get('confirmPassword')?.errors?.['required']) {
+                  Confirmá tu contraseña.
+                } @else if (form.errors?.['passwordMismatch']) {
+                  Las contraseñas no coinciden.
+                }
+              </p>
+            }
+          </div>
+
+          @if (serverError) {
+            <div
+              class="flex items-start gap-2 rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-sm text-red-800"
+              role="alert"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="mt-0.5 h-4 w-4 shrink-0 text-red-500" aria-hidden="true">
+                <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z" clip-rule="evenodd" />
+              </svg>
+              <span>{{ serverError }}</span>
+            </div>
+          }
+
+          <button
+            type="submit"
+            [disabled]="loading"
+            class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-amber-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            @if (loading) {
+              <svg
+                class="h-5 w-5 animate-spin text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+              <span>Registrando cuenta...</span>
+            } @else {
+              <span>Registrarme</span>
+            }
+          </button>
+
+          <p class="text-center text-sm text-slate-500">
+            ¿Ya tenés cuenta?
+            <a
+              routerLink="/login"
+              class="font-medium text-orange-600 hover:text-orange-700 focus:outline-none focus:underline"
+              >Iniciar sesión</a
+            >
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,297 @@
+<mxfile host="Electron" modified="2026-04-09T12:00:00.000Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/21.6.8 Chrome/114.0.5735.289 Electron/25.8.1 Safari/537.36" etag="qWJ5h_5aP8X1n2M4Z4" version="21.6.8" type="device">
+  <diagram id="R2lEEEUBdFMjLlhIrx00" name="Page-1">
+    <mxGraphModel dx="1422" dy="804" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- PAQUETE: USUARIOS Y AUTENTICACION -->
+        <mxCell id="pkg_auth" value="Paquete: Usuarios y Autenticación" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=250;tabHeight=25;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="340" height="420" as="geometry" />
+        </mxCell>
+
+        <!-- Clase: Usuario -->
+        <mxCell id="cls_usuario" value="Usuario&#xa;--&#xa;- id: int&#xa;- nombre: string&#xa;- apellido: string&#xa;- email: string&#xa;- passwordHash: string&#xa;- telefono: string&#xa;- fotoPerfil: string&#xa;- estado: string&#xa;- latitud: decimal&#xa;- longitud: decimal&#xa;- fechaRegistro: datetime&#xa;--&#xa;+ iniciarSesion()&#xa;+ actualizarPerfil()&#xa;+ cambiarPassword()&#xa;+ actualizarUbicacion()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_auth">
+          <mxGeometry x="20" y="40" width="180" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- Clase: Rol -->
+        <mxCell id="cls_rol" value="Rol&#xa;--&#xa;- id: int&#xa;- nombre: string&#xa;- descripcion: string&#xa;--&#xa;+ obtenerPermisos()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_auth">
+          <mxGeometry x="220" y="40" width="100" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Usuario-Rol -->
+        <mxCell id="rel_usr_rol" value="tiene" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="pkg_auth" source="cls_usuario" target="cls_rol">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_rol_card1" value="1..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_rol">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_rol_card2" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_rol">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-10" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Clase: Vehiculo -->
+        <mxCell id="cls_vehiculo" value="Vehiculo&#xa;--&#xa;- id: int&#xa;- placa: string&#xa;- marca: string&#xa;- modelo: string&#xa;- anio: int&#xa;- color: string&#xa;- tipoSeguro: string&#xa;- fotoFrontal: string&#xa;--&#xa;+ registrar()&#xa;+ editar()&#xa;+ eliminar()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_auth">
+          <mxGeometry x="20" y="290" width="160" height="110" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Usuario-Vehiculo -->
+        <mxCell id="rel_usr_veh" value="posee" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="pkg_auth" source="cls_usuario" target="cls_vehiculo">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_veh_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_veh">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_veh_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_veh">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="15" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PAQUETE: TALLERES Y MECANICOS -->
+        <mxCell id="pkg_talleres" value="Paquete: Talleres y Mecánicos" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=220;tabHeight=25;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#e1d5e7;strokeColor=#9673a6;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="400" y="40" width="320" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- Clase: Taller -->
+        <mxCell id="cls_taller" value="Taller&#xa;--&#xa;- id: int&#xa;- nombre: string&#xa;- direccion: string&#xa;- latitud: decimal&#xa;- longitud: decimal&#xa;- telefono: string&#xa;- disponibilidad: bool&#xa;- capacidadMaxima: int&#xa;- calificacionPromedio: decimal&#xa;--&#xa;+ actualizarDisponibilidad()&#xa;+ agregarMecanico()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_talleres">
+          <mxGeometry x="20" y="40" width="180" height="170" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Usuario-Taller -->
+        <mxCell id="rel_usr_tal" value="administra" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_usuario" target="cls_taller">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_tal_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_tal">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-5" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_tal_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_tal">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="5" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Relacion: Usuario-Mecanico (Simulada por pertenencia) -->
+        <mxCell id="rel_usr_mec" value="es mecánico" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;dashed=1;" edge="1" parent="1" source="cls_usuario" target="cls_taller">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_mec_note" value="Mecánico es un&#xa;Rol de Usuario" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_mec">
+          <mxGeometry x="0" y="0" relative="1" as="geometry">
+            <mxPoint x="10" y="15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PAQUETE: INCIDENTES Y SERVICIOS -->
+        <mxCell id="pkg_incidentes" value="Paquete: Incidentes y Servicios" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=250;tabHeight=25;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="40" y="480" width="800" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- Clase: Incidente -->
+        <mxCell id="cls_incidente" value="Incidente&#xa;--&#xa;- id: int&#xa;- latitud: decimal&#xa;- longitud: decimal&#xa;- descripcionAdicional: string&#xa;- fechaCreacion: datetime&#xa;- estado: string&#xa;- categoria_ia: string&#xa;- prioridad_ia: string&#xa;- resumen_ia: string&#xa;- confianza_ia: decimal&#xa;--&#xa;+ cancelar()&#xa;+ actualizarEstado()&#xa;+ clasificarIA()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_incidentes">
+          <mxGeometry x="20" y="40" width="180" height="230" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Usuario-Incidente -->
+        <mxCell id="rel_usr_inc" value="reporta" style="endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_usuario" target="cls_incidente">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_inc_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_inc">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="-5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_usr_inc_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_usr_inc">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="15" y="-5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Relacion: Vehiculo-Incidente -->
+        <mxCell id="rel_veh_inc" value="involucra" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_vehiculo" target="cls_incidente">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_veh_inc_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_veh_inc">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="0" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_veh_inc_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_veh_inc">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="15" y="-10" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Clase: Evidencia -->
+        <mxCell id="cls_evidencia" value="Evidencia&#xa;--&#xa;- id: int&#xa;- tipo: string (audio/foto)&#xa;- urlArchivo: string&#xa;- textoExtraido_ia: string&#xa;- analisisDaño_ia: string&#xa;- fechaSubida: datetime&#xa;--&#xa;+ procesarIA()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_incidentes">
+          <mxGeometry x="230" y="40" width="180" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Incidente-Evidencia -->
+        <mxCell id="rel_inc_evi" value="contiene" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" edge="1" parent="pkg_incidentes" source="cls_incidente" target="cls_evidencia">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_inc_evi_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_inc_evi">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="0" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_inc_evi_card2" value="1..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_inc_evi">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-15" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Clase: AsignacionServicio -->
+        <mxCell id="cls_asignacion" value="AsignacionServicio&#xa;--&#xa;- id: int&#xa;- costoEstimado: decimal&#xa;- distanciaKm: decimal&#xa;- tiempoEstimadoLlegada: int&#xa;- estado: string&#xa;- fechaCreacion: datetime&#xa;- fechaAceptacion: datetime&#xa;- fechaFinalizacion: datetime&#xa;- motivoRechazo: string&#xa;- trabajoRealizado: string&#xa;- costoFinal: decimal&#xa;- observacionesMecanico: string&#xa;--&#xa;+ aceptar()&#xa;+ rechazar()&#xa;+ finalizar()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_incidentes">
+          <mxGeometry x="450" y="40" width="220" height="250" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Incidente-Asignacion -->
+        <mxCell id="rel_inc_asi" value="genera" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" edge="1" parent="pkg_incidentes" source="cls_incidente" target="cls_asignacion">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_inc_asi_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_inc_asi">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_inc_asi_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_inc_asi">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-15" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Relacion: Taller-Asignacion -->
+        <mxCell id="rel_tal_asi" value="recibe" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_taller" target="cls_asignacion">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tal_asi_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_tal_asi">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_tal_asi_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_tal_asi">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="15" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Relacion: Usuario(Mecanico)-Asignacion -->
+        <mxCell id="rel_mec_asi" value="atiende" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_usuario" target="cls_asignacion">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_mec_asi_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_mec_asi">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-5" y="-5" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_mec_asi_card2" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_mec_asi">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-5" y="-15" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PAQUETE: PAGOS -->
+        <mxCell id="pkg_pagos" value="Paquete: Pagos" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=100;tabHeight=25;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="870" y="480" width="220" height="320" as="geometry" />
+        </mxCell>
+
+        <!-- Clase: Pago -->
+        <mxCell id="cls_pago" value="Pago&#xa;--&#xa;- id: int&#xa;- montoTotal: decimal&#xa;- comisionPlataforma: decimal&#xa;- montoTaller: decimal&#xa;- estado: string&#xa;- metodoPago: string&#xa;- idTransaccionExterna: string&#xa;- fechaPago: datetime&#xa;--&#xa;+ procesar()&#xa;+ calcularComision()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_pagos">
+          <mxGeometry x="20" y="40" width="180" height="150" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Asignacion-Pago -->
+        <mxCell id="rel_asi_pag" value="genera" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_asignacion" target="cls_pago">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_asi_pag_card1" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_asi_pag">
+          <mxGeometry x="-0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="10" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rel_asi_pag_card2" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="rel_asi_pag">
+          <mxGeometry x="0.8" y="2" relative="1" as="geometry">
+            <mxPoint x="-15" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Clase: Calificacion -->
+        <mxCell id="cls_calificacion" value="Calificacion&#xa;--&#xa;- id: int&#xa;- puntuacion: int&#xa;- comentario: string&#xa;- fecha: datetime&#xa;--&#xa;+ registrar()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_pagos">
+          <mxGeometry x="20" y="210" width="180" height="90" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Asignacion-Calificacion -->
+        <mxCell id="rel_asi_cal" value="recibe" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_asignacion" target="cls_calificacion">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- PAQUETE: SISTEMA -->
+        <mxCell id="pkg_sistema" value="Paquete: Sistema" style="shape=folder;fontStyle=1;spacingTop=10;tabWidth=100;tabHeight=25;tabPosition=left;html=1;whiteSpace=wrap;verticalAlign=top;fillColor=#fff2cc;strokeColor=#d6b656;fontColor=#333333;" vertex="1" parent="1">
+          <mxGeometry x="750" y="40" width="340" height="420" as="geometry" />
+        </mxCell>
+
+        <!-- Clase: Notificacion -->
+        <mxCell id="cls_notificacion" value="Notificacion&#xa;--&#xa;- id: int&#xa;- titulo: string&#xa;- mensaje: string&#xa;- tipo: string&#xa;- leida: bool&#xa;- fechaHora: datetime&#xa;--&#xa;+ enviarPush()&#xa;+ marcarLeida()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_sistema">
+          <mxGeometry x="20" y="40" width="140" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Usuario-Notificacion -->
+        <mxCell id="rel_usr_not" value="recibe" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_usuario" target="cls_notificacion">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- Clase: Bitacora -->
+        <mxCell id="cls_bitacora" value="Bitacora&#xa;--&#xa;- id: int&#xa;- modulo: string&#xa;- accion: string&#xa;- ipOrigen: string&#xa;- resultado: string&#xa;- fechaHora: datetime&#xa;--&#xa;+ registrar()&#xa;+ purgar()" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=5;" vertex="1" parent="pkg_sistema">
+          <mxGeometry x="180" y="40" width="140" height="130" as="geometry" />
+        </mxCell>
+
+        <!-- Relacion: Usuario-Bitacora -->
+        <mxCell id="rel_usr_bit" value="audita" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="cls_usuario" target="cls_bitacora">
+          <mxGeometry x="-0.0345" y="10" relative="1" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1000" y="15" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

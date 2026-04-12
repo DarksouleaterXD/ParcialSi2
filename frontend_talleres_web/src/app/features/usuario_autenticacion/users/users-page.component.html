@@ -1,0 +1,854 @@
+<div class="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <!-- Cabecera + CTA (misma paleta login: slate + naranja) -->
+    <div
+      class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
+    >
+      <div class="flex min-w-0 items-start gap-4">
+        <div
+          class="hidden shrink-0 rounded-xl bg-orange-500/10 p-3 text-orange-600 sm:flex sm:items-center sm:justify-center"
+          aria-hidden="true"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-7 w-7">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+            />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">Usuarios</h1>
+          <p class="mt-1 text-sm text-slate-500">Alta, edición, filtros y baja lógica de usuarios (solo administrador).</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="openCreateModal()"
+        class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Nuevo registro
+      </button>
+    </div>
+
+    @if (errorMessage) {
+      <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="mt-0.5 h-5 w-5 shrink-0 text-red-500" aria-hidden="true">
+          <path
+            fill-rule="evenodd"
+            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+    @if (successMessage) {
+      <div class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800" role="status">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <span>{{ successMessage }}</span>
+      </div>
+    }
+
+    <!-- Filtros: barra compacta, responsive -->
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div class="mb-4 flex items-center gap-2 text-slate-700">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-orange-500" aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+          />
+        </svg>
+        <h2 class="text-sm font-semibold text-slate-800">Filtros</h2>
+      </div>
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-end">
+        <div class="lg:col-span-5">
+          <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="filter-q">Buscar</label>
+          <div class="relative">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              id="filter-q"
+              type="search"
+              formControlName="q"
+              placeholder="Nombre, apellido o email"
+              class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+        </div>
+        <div class="lg:col-span-4">
+          <label class="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-slate-500" for="filter-rol">Rol</label>
+          <div class="relative">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="pointer-events-none absolute left-3 top-1/2 z-[1] h-5 w-5 -translate-y-1/2 text-slate-500"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"
+              />
+            </svg>
+            <select
+              id="filter-rol"
+              formControlName="idRol"
+              class="w-full appearance-none rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-10 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            >
+              <option [ngValue]="0">Todos los roles</option>
+              @for (r of roles; track r.id) {
+                <option [ngValue]="r.id">{{ r.nombre }}</option>
+              }
+            </select>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </div>
+        </div>
+        <div class="lg:col-span-3">
+          <button
+            type="submit"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+              />
+            </svg>
+            Aplicar
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Tabla -->
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      @if (loading) {
+        <div class="p-12 text-center text-slate-500">
+          <svg class="mx-auto mb-4 h-9 w-9 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p class="text-sm font-medium text-slate-600">Cargando usuarios…</p>
+        </div>
+      } @else {
+        <div class="-mx-4 overflow-x-auto sm:mx-0">
+          <table class="w-full min-w-[640px] text-left text-sm">
+            <thead>
+              <tr>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Usuario
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Rol
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Estado
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (u of items; track u.id) {
+                <tr class="transition-colors hover:bg-slate-50">
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <div class="font-medium text-slate-900">{{ u.nombre }} {{ u.apellido }}</div>
+                    <div class="mt-0.5 break-all text-xs text-slate-500">{{ u.email }}</div>
+                    @if (u.telefono) {
+                      <div class="mt-0.5 text-xs text-slate-400">{{ u.telefono }}</div>
+                    }
+                  </td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    @if (u.roles.length) {
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (role of u.roles; track role) {
+                          <span
+                            class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                            [ngClass]="roleBadgeClasses(role)"
+                          >
+                            {{ role }}
+                          </span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-xs text-slate-400">—</span>
+                    }
+                  </td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <span
+                      class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                      [ngClass]="
+                        u.estado === 'Activo'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-slate-200 bg-slate-100 text-slate-600'
+                      "
+                    >
+                      {{ u.estado }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <div class="flex items-center justify-end gap-0">
+                      <button
+                        type="button"
+                        (click)="openEditModal(u)"
+                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-orange-50 hover:text-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                        aria-label="Editar"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18.33l.659-2.63a4.5 4.5 0 0 1 1.13-1.897l9.663-9.663a.375.375 0 0 1 .53 0Z"
+                          />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.5 12 15" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        (click)="toggleUsuarioActivo(u)"
+                        [disabled]="isCurrentUser(u) || toggleSubmittingId === u.id"
+                        class="rounded-lg p-2 text-slate-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 disabled:cursor-not-allowed disabled:opacity-40"
+                        [ngClass]="
+                          isUsuarioActivo(u)
+                            ? 'hover:bg-amber-50 hover:text-amber-600'
+                            : 'hover:bg-emerald-50 hover:text-emerald-600'
+                        "
+                        [attr.aria-label]="isUsuarioActivo(u) ? 'Desactivar usuario' : 'Activar usuario'"
+                        [attr.title]="
+                          isCurrentUser(u)
+                            ? 'No podés desactivar tu propia cuenta desde aquí'
+                            : isUsuarioActivo(u)
+                              ? 'Desactivar'
+                              : 'Activar'
+                        "
+                      >
+                        @if (toggleSubmittingId === u.id) {
+                          <svg class="h-5 w-5 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                          </svg>
+                        } @else if (isUsuarioActivo(u)) {
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.25 9v6m-4.5-6v6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                          </svg>
+                        } @else {
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z"
+                            />
+                          </svg>
+                        }
+                      </button>
+                      <button
+                        type="button"
+                        (click)="openDeleteModal(u)"
+                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
+                        aria-label="Dar de baja"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (items.length === 0 && !loading) {
+                <tr>
+                  <td colspan="4" class="px-6 py-12 text-center text-slate-500">
+                    <div class="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-slate-400" aria-hidden="true">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+                        />
+                      </svg>
+                    </div>
+                    <p class="font-medium text-slate-900">No se encontraron usuarios.</p>
+                    <p class="mt-1 text-sm">Probá con otros filtros.</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        >
+          <p class="text-center text-slate-500 sm:text-left">
+            Página <span class="font-medium text-slate-900">{{ page }}</span>
+            <span class="mx-1">—</span>
+            {{ total }} usuarios
+          </p>
+          <div class="flex justify-center gap-2 sm:justify-end">
+            <button
+              type="button"
+              (click)="prevPage()"
+              [disabled]="page <= 1"
+              class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-orange-200 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+              Anterior
+            </button>
+            <button
+              type="button"
+              (click)="nextPage()"
+              [disabled]="page * pageSize >= total"
+              class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-orange-200 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  </div>
+</div>
+
+<!-- Modal: crear -->
+@if (createOpen()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
+    <button
+      type="button"
+      class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]"
+      (click)="closeCreateModal()"
+      aria-label="Cerrar"
+    ></button>
+    <div
+      class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div class="flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </span>
+          <div>
+            <h2 id="modal-create-title" class="text-lg font-semibold text-slate-800">Nuevo usuario</h2>
+            <p class="text-sm text-slate-500">Podés definir contraseña abajo o dejar que se genere una automática (se muestra al crear y se envía por correo si hay SMTP).</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="closeCreateModal()"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          aria-label="Cerrar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form [formGroup]="createForm" (ngSubmit)="saveCreate()" class="flex min-h-0 flex-1 flex-col">
+        <div class="space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-nombre">Nombre</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <input
+                id="c-nombre"
+                formControlName="nombre"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Nombre"
+              />
+            </div>
+            @if (createForm.get('nombre')?.invalid && createForm.get('nombre')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Requerido (máx. 100).</p>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-apellido">Apellido</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <input
+                id="c-apellido"
+                formControlName="apellido"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="Apellido"
+              />
+            </div>
+            @if (createForm.get('apellido')?.invalid && createForm.get('apellido')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Requerido (máx. 100).</p>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-email">Email</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+              </svg>
+              <input
+                id="c-email"
+                type="email"
+                formControlName="email"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="correo@dominio.com"
+              />
+            </div>
+            @if (createForm.get('email')?.invalid && createForm.get('email')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Email requerido.</p>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-tel">Teléfono (opcional)</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+              </svg>
+              <input
+                id="c-tel"
+                formControlName="telefono"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                placeholder="+54 …"
+                maxlength="20"
+              />
+            </div>
+          </div>
+          <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50/90 p-3">
+            <p class="mb-1 text-xs font-semibold text-slate-700">Contraseña inicial (opcional)</p>
+            <p class="mb-3 text-xs text-slate-500">Vacío = contraseña aleatoria. Si completás, debe coincidir en ambos campos.</p>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="c-pw">Contraseña</label>
+                <div class="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                  <input
+                    id="c-pw"
+                    type="password"
+                    formControlName="password"
+                    autocomplete="new-password"
+                    class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="••••••••"
+                    maxlength="128"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="c-pwc">Confirmar contraseña</label>
+                <div class="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                  <input
+                    id="c-pwc"
+                    type="password"
+                    formControlName="password_confirmacion"
+                    autocomplete="new-password"
+                    class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Repetir"
+                    maxlength="128"
+                  />
+                </div>
+              </div>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-400">Mínimo 8 caracteres, al menos una letra y un número.</p>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-rol">Rol</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 z-[1] h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+              </svg>
+              <select
+                id="c-rol"
+                formControlName="id_rol"
+                class="w-full appearance-none rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-10 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              >
+                <option [ngValue]="0" disabled>Elegí un rol</option>
+                @for (r of roles; track r.id) {
+                  <option [ngValue]="r.id">{{ r.nombre }}</option>
+                }
+              </select>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </div>
+            @if (createForm.get('id_rol')?.invalid && createForm.get('id_rol')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Seleccioná un rol.</p>
+            }
+          </div>
+        </div>
+        <div class="mt-auto border-t border-slate-100 bg-slate-50/80">
+          @if (createModalError) {
+            <div
+              class="flex items-start gap-2 border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-800 sm:px-6"
+              role="alert"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="mt-0.5 h-5 w-5 shrink-0 text-red-500"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>{{ createModalError }}</span>
+            </div>
+          }
+          <div class="flex flex-col-reverse gap-2 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <button
+            type="button"
+            (click)="closeCreateModal()"
+            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 sm:w-auto"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="createSubmitting"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-60 sm:w-auto"
+          >
+            @if (createSubmitting) {
+              <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Creando…
+            } @else {
+              Crear usuario
+            }
+          </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal: editar -->
+@if (editOpen()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+    <button type="button" class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" (click)="closeEditModal()" aria-label="Cerrar"></button>
+    <div
+      class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div class="flex items-center gap-3">
+          <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18.33l.659-2.63a4.5 4.5 0 0 1 1.13-1.897l9.663-9.663a.375.375 0 0 1 .53 0Z"
+              />
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 7.5 12 15" />
+            </svg>
+          </span>
+          <div>
+            <h2 id="modal-edit-title" class="text-lg font-semibold text-slate-800">Editar usuario</h2>
+            <p class="text-sm text-slate-500">Datos, rol, estado y opcionalmente una nueva contraseña.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="closeEditModal()"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          aria-label="Cerrar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="flex min-h-0 flex-1 flex-col">
+        <div class="space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-nombre">Nombre</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <input
+                id="e-nombre"
+                formControlName="nombre"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+            @if (editForm.get('nombre')?.invalid && editForm.get('nombre')?.touched) {
+              <p class="mt-1 text-xs text-red-500">Requerido.</p>
+            }
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-apellido">Apellido</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+              <input
+                id="e-apellido"
+                formControlName="apellido"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-email">Email</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+              </svg>
+              <input
+                id="e-email"
+                type="email"
+                formControlName="email"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-tel">Teléfono</label>
+            <div class="relative">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+              </svg>
+              <input
+                id="e-tel"
+                formControlName="telefono"
+                class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                maxlength="20"
+              />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="e-estado">Estado</label>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 z-[1] h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+                <select
+                  id="e-estado"
+                  formControlName="estado"
+                  class="w-full appearance-none rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-10 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  <option value="Activo">Activo</option>
+                  <option value="Inactivo">Inactivo</option>
+                </select>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </div>
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="e-rol">Rol</label>
+              <div class="relative">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 z-[1] h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+                </svg>
+                <select
+                  id="e-rol"
+                  formControlName="id_rol"
+                  class="w-full appearance-none rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-10 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                >
+                  @for (r of roles; track r.id) {
+                    <option [ngValue]="r.id">{{ r.nombre }}</option>
+                  }
+                </select>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                </svg>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-xl border border-dashed border-orange-200/90 bg-orange-50/50 p-3">
+            <p class="mb-1 text-xs font-semibold text-slate-800">Nueva contraseña (opcional)</p>
+            <p class="mb-3 text-xs text-slate-600">Solo si querés cambiar la clave del usuario. Dejá vacío para mantener la actual.</p>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="e-pw">Nueva contraseña</label>
+                <div class="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                  <input
+                    id="e-pw"
+                    type="password"
+                    formControlName="password_nueva"
+                    autocomplete="new-password"
+                    class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="••••••••"
+                    maxlength="128"
+                  />
+                </div>
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="e-pwc">Confirmar</label>
+                <div class="relative">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                  </svg>
+                  <input
+                    id="e-pwc"
+                    type="password"
+                    formControlName="password_confirmacion"
+                    autocomplete="new-password"
+                    class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    placeholder="Repetir"
+                    maxlength="128"
+                  />
+                </div>
+              </div>
+            </div>
+            <p class="mt-2 text-[11px] text-slate-500">Mínimo 8 caracteres, una letra y un número.</p>
+          </div>
+        </div>
+        <div class="mt-auto border-t border-slate-100 bg-slate-50/80">
+          @if (editModalError) {
+            <div
+              class="flex items-start gap-2 border-b border-red-100 bg-red-50 px-5 py-3 text-sm text-red-800 sm:px-6"
+              role="alert"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                class="mt-0.5 h-5 w-5 shrink-0 text-red-500"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span>{{ editModalError }}</span>
+            </div>
+          }
+          <div class="flex flex-col-reverse gap-2 px-5 py-4 sm:flex-row sm:justify-end sm:px-6">
+          <button
+            type="button"
+            (click)="closeEditModal()"
+            class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 sm:w-auto"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            [disabled]="editSubmitting"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:opacity-60 sm:w-auto"
+          >
+            @if (editSubmitting) {
+              <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              Guardando…
+            } @else {
+              Guardar cambios
+            }
+          </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal: confirmar baja -->
+@if (deleteOpen() && userToDelete) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="modal-del-title">
+    <button type="button" class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" (click)="closeDeleteModal()" aria-label="Cerrar"></button>
+    <div
+      class="relative z-10 w-full max-w-md rounded-t-2xl border border-slate-200 bg-white p-5 shadow-2xl sm:rounded-2xl sm:p-6"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex gap-3">
+        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+            />
+          </svg>
+        </span>
+        <div class="min-w-0">
+          <h2 id="modal-del-title" class="text-lg font-semibold text-slate-800">Dar de baja usuario</h2>
+          <p class="mt-2 text-sm text-slate-600">
+            ¿Confirmás la baja de <span class="font-medium text-slate-900">{{ userToDelete.email }}</span>? Esta acción desactiva la cuenta.
+          </p>
+        </div>
+      </div>
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          class="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 sm:w-auto"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          (click)="confirmDelete()"
+          [disabled]="deleteSubmitting"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-60"
+        >
+          @if (deleteSubmitting) {
+            <svg class="h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          }
+          Dar de baja
+        </button>
+      </div>
+    </div>
+  </div>
+}
