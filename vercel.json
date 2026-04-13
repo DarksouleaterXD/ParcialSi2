@@ -1,0 +1,8 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "angular",
+  "installCommand": "cd frontend_talleres_web && npm install",
+  "buildCommand": "cd frontend_talleres_web && npm run build",
+  "outputDirectory": "frontend_talleres_web/dist/frontend_talleres_web/browser",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
