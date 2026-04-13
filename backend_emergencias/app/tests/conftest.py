@@ -11,6 +11,7 @@ from app.core.security import decode_token, hash_password
 from app.main import app
 from app.modules.incidentes_servicios import models as _incidentes_models  # noqa: F401 — metadata
 from app.modules.sistema.models import Bitacora, TokenRevocado  # noqa: F401 — metadata
+from app.modules.taller_tecnico import models as _taller_tecnico_models  # noqa: F401 — metadata
 from app.modules.usuario_autenticacion.models import Rol, Usuario, usuario_rol
 
 

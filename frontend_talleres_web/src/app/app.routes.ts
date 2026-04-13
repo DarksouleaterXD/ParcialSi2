@@ -43,6 +43,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/usuario_autenticacion/roles/roles-page.component').then((m) => m.RolesPageComponent),
       },
+      {
+        path: 'talleres',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/taller_tecnico/talleres/talleres-page.component').then((m) => m.TalleresPageComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },

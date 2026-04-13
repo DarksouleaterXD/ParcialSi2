@@ -60,6 +60,8 @@ CREATE TABLE Taller (
     latitud DECIMAL(10, 8),
     longitud DECIMAL(11, 8),
     telefono VARCHAR(20),
+    email VARCHAR(150),
+    horario_atencion VARCHAR(120),
     disponibilidad BOOLEAN DEFAULT TRUE,
     capacidadMax INT NOT NULL,
     calificacion DECIMAL(3, 2) DEFAULT 0.00,

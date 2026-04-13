@@ -7,7 +7,7 @@ from app.core.database import engine
 from app.modules.incidentes_servicios.router import router as incidentes_router
 from app.modules.pagos.router import router as pagos_router
 from app.modules.sistema.router import router as sistema_router
-from app.modules.taller_tecnico.router import router as taller_router
+from app.modules.taller_tecnico.router import admin_talleres_router, router as taller_router
 from app.modules.usuario_autenticacion.router import auth_router, roles_router, users_router
 from app.modules.usuario_autenticacion.vehiculos_router import vehiculos_router
 
@@ -15,6 +15,7 @@ from app.modules.usuario_autenticacion.vehiculos_router import vehiculos_router
 from app.modules.usuario_autenticacion import models as _usuario_models  # noqa: F401
 from app.modules.incidentes_servicios import models as _incidentes_models  # noqa: F401
 from app.modules.sistema import models as _sistema_models  # noqa: F401
+from app.modules.taller_tecnico import models as _taller_models  # noqa: F401
 
 app = FastAPI(title="Emergencias API", version="0.1.0")
 
@@ -32,6 +33,7 @@ app.include_router(roles_router, prefix="/api")
 app.include_router(vehiculos_router, prefix="/api")
 app.include_router(sistema_router, prefix="/api")
 app.include_router(taller_router, prefix="/api")
+app.include_router(admin_talleres_router, prefix="/api")
 app.include_router(incidentes_router, prefix="/api")
 app.include_router(pagos_router, prefix="/api")
 

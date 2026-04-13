@@ -37,9 +37,7 @@ export const SHELL_NAV_MODULES: ShellNavModule[] = [
     packageId: 'taller_tecnico',
     title: 'Taller técnico',
     packageIcon: 'wrench',
-    items: [],
-    comingSoon: true,
-    soonIcon: 'wrench',
+    items: [{ path: '/talleres', label: 'Gestionar talleres', adminOnly: true, icon: 'wrench' }],
   },
   {
     packageId: 'incidentes_servicios',

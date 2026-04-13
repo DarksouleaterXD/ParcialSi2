@@ -1,0 +1,300 @@
+<div class="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <div
+      class="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-6"
+    >
+      <div class="flex min-w-0 items-start gap-4">
+        <div
+          class="hidden shrink-0 rounded-xl bg-orange-500/10 p-3 text-orange-600 sm:flex sm:items-center sm:justify-center"
+          aria-hidden="true"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-7 w-7">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655-5.653a2.548 2.548 0 0 1-.722-1.794V5.25a2.25 2.25 0 0 1 2.25-2.25H13.5a2.25 2.25 0 0 1 2.25 2.25v1.628c0 .218.043.431.122.627l1.101 2.75a2.25 2.25 0 0 1-.957 2.907l-1.84 1.224a2.25 2.25 0 0 1-1.183.33H9.75"
+            />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">Talleres</h1>
+          <p class="mt-1 text-sm text-slate-500">CU06 — Alta, edición y estado de talleres (solo administrador).</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        (click)="openCreateModal()"
+        class="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 sm:w-auto"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        Nuevo taller
+      </button>
+    </div>
+
+    @if (errorMessage) {
+      <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
+    @if (successMessage) {
+      <div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800" role="status">
+        {{ successMessage }}
+      </div>
+    }
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="grid grid-cols-1 gap-4 md:grid-cols-12 md:items-end">
+        <div class="md:col-span-6">
+          <label class="mb-1 block text-xs font-medium text-slate-600" for="ft-q">Buscar</label>
+          <input
+            id="ft-q"
+            type="search"
+            formControlName="q"
+            placeholder="Nombre, dirección o email"
+            class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <div class="md:col-span-4">
+          <label class="mb-1 block text-xs font-medium text-slate-600" for="ft-est">Estado</label>
+          <select
+            id="ft-est"
+            formControlName="estado"
+            class="w-full rounded-xl border-0 bg-slate-100 py-2.5 px-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            <option value="todos">Todos</option>
+            <option value="activo">Solo activos</option>
+            <option value="inactivo">Solo inactivos</option>
+          </select>
+        </div>
+        <div class="md:col-span-2">
+          <button
+            type="submit"
+            class="w-full rounded-xl bg-slate-800 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-500"
+          >
+            Filtrar
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 text-left text-sm">
+          <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <tr>
+              <th class="px-4 py-3">Taller</th>
+              <th class="px-4 py-3">Ubicación</th>
+              <th class="hidden px-4 py-3 sm:table-cell">Contacto</th>
+              <th class="px-4 py-3">Cap.</th>
+              <th class="px-4 py-3">Estado</th>
+              <th class="px-4 py-3 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @if (loading) {
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-slate-500">Cargando…</td>
+              </tr>
+            } @else if (!items.length) {
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-slate-500">No hay talleres con estos filtros.</td>
+              </tr>
+            } @else {
+              @for (t of items; track t.id) {
+                <tr class="hover:bg-slate-50/80">
+                  <td class="px-4 py-3">
+                    <p class="font-medium text-slate-800">{{ t.nombre }}</p>
+                    <p class="text-xs text-slate-500">{{ t.direccion }}</p>
+                    @if (t.horario_atencion) {
+                      <p class="mt-0.5 text-xs text-slate-400">{{ t.horario_atencion }}</p>
+                    }
+                  </td>
+                  <td class="px-4 py-3 font-mono text-xs text-slate-600">{{ gpsResumen(t) }}</td>
+                  <td class="hidden px-4 py-3 text-slate-600 sm:table-cell">
+                    <p>{{ t.telefono || '—' }}</p>
+                    <p class="text-xs">{{ t.email || '—' }}</p>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700">{{ t.capacidad_maxima }}</td>
+                  <td class="px-4 py-3">
+                    @if (t.disponibilidad) {
+                      <span class="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-800">Activo</span>
+                    } @else {
+                      <span class="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">Inactivo</span>
+                    }
+                    <p class="mt-1 text-[10px] text-slate-400">Calif. {{ t.calificacion | number: '1.1-1' }}</p>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <button
+                      type="button"
+                      (click)="openEditModal(t)"
+                      class="mr-1 rounded-lg px-2 py-1 text-xs font-medium text-orange-600 hover:bg-orange-50"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleDisponibilidad(t)"
+                      [disabled]="estadoSubmittingId === t.id"
+                      class="rounded-lg px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                    >
+                      {{ t.disponibilidad ? 'Desactivar' : 'Reactivar' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="flex flex-col items-center justify-between gap-2 border-t border-slate-100 px-4 py-3 text-sm text-slate-600 sm:flex-row">
+        <span>Total: {{ total }}</span>
+        <div class="flex gap-2">
+          <button type="button" (click)="prevPage()" [disabled]="page <= 1 || loading" class="rounded-lg border border-slate-200 px-3 py-1 disabled:opacity-50">Anterior</button>
+          <span class="px-2 py-1">Página {{ page }}</span>
+          <button
+            type="button"
+            (click)="nextPage()"
+            [disabled]="loading || page * pageSize >= total"
+            class="rounded-lg border border-slate-200 px-3 py-1 disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- Modal crear -->
+@if (createOpen()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true">
+    <button type="button" class="absolute inset-0 bg-slate-900/50" (click)="closeCreateModal()" aria-label="Cerrar"></button>
+    <div class="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
+      <form [formGroup]="createForm" (ngSubmit)="saveCreate()" class="flex flex-col">
+        <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
+          <h2 class="text-lg font-semibold text-slate-800">Registrar taller</h2>
+          <p class="mt-1 text-sm text-slate-500">Datos de contacto y ubicación GPS (WGS84).</p>
+        </div>
+        <div class="space-y-3 px-5 py-4 sm:px-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-nom">Nombre</label>
+            <input id="c-nom" formControlName="nombre" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-dir">Dirección</label>
+            <input id="c-dir" formControlName="direccion" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="c-lat">Latitud</label>
+              <input id="c-lat" type="number" step="any" formControlName="latitud" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="c-lon">Longitud</label>
+              <input id="c-lon" type="number" step="any" formControlName="longitud" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">Rango: latitud -90 a 90, longitud -180 a 180.</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="c-tel">Teléfono</label>
+              <input id="c-tel" formControlName="telefono" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="c-mail">Email</label>
+              <input id="c-mail" type="email" formControlName="email" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-cap">Capacidad máxima</label>
+            <input id="c-cap" type="number" formControlName="capacidad_maxima" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-hor">Horario de atención</label>
+            <input id="c-hor" formControlName="horario_atencion" placeholder="Ej. Lun–Vie 8–18" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+        </div>
+        <div class="mt-auto border-t border-slate-100 bg-slate-50/80">
+          @if (createModalError) {
+            <div class="border-b border-red-100 bg-red-50 px-5 py-2 text-sm text-red-800">{{ createModalError }}</div>
+          }
+          <div class="flex flex-col-reverse gap-2 px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" (click)="closeCreateModal()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">Cancelar</button>
+            <button
+              type="submit"
+              [disabled]="createSubmitting"
+              class="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {{ createSubmitting ? 'Guardando…' : 'Registrar' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Modal editar -->
+@if (editOpen()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true">
+    <button type="button" class="absolute inset-0 bg-slate-900/50" (click)="closeEditModal()" aria-label="Cerrar"></button>
+    <div class="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:rounded-2xl" (click)="$event.stopPropagation()">
+      <form [formGroup]="editForm" (ngSubmit)="saveEdit()" class="flex flex-col">
+        <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
+          <h2 class="text-lg font-semibold text-slate-800">Editar taller</h2>
+        </div>
+        <div class="space-y-3 px-5 py-4 sm:px-6">
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-nom">Nombre</label>
+            <input id="e-nom" formControlName="nombre" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-dir">Dirección</label>
+            <input id="e-dir" formControlName="direccion" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="e-lat">Latitud</label>
+              <input id="e-lat" type="number" step="any" formControlName="latitud" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="e-lon">Longitud</label>
+              <input id="e-lon" type="number" step="any" formControlName="longitud" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="e-tel">Teléfono</label>
+              <input id="e-tel" formControlName="telefono" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+            <div>
+              <label class="mb-1 block text-xs font-medium text-slate-600" for="e-mail">Email</label>
+              <input id="e-mail" type="email" formControlName="email" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-cap">Capacidad máxima</label>
+            <input id="e-cap" type="number" formControlName="capacidad_maxima" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+          <div>
+            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-hor">Horario</label>
+            <input id="e-hor" formControlName="horario_atencion" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          </div>
+        </div>
+        <div class="mt-auto border-t border-slate-100 bg-slate-50/80">
+          @if (editModalError) {
+            <div class="border-b border-red-100 bg-red-50 px-5 py-2 text-sm text-red-800">{{ editModalError }}</div>
+          }
+          <div class="flex flex-col-reverse gap-2 px-5 py-4 sm:flex-row sm:justify-end">
+            <button type="button" (click)="closeEditModal()" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">Cancelar</button>
+            <button type="submit" [disabled]="editSubmitting" class="rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
+              {{ editSubmitting ? 'Guardando…' : 'Guardar' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+}

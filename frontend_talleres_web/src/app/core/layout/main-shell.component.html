@@ -208,6 +208,15 @@
                           />
                         </svg>
                       }
+                      @case ('wrench') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655-5.653a2.548 2.548 0 0 1-.722-1.794V5.25a2.25 2.25 0 0 1 2.25-2.25H13.5a2.25 2.25 0 0 1 2.25 2.25v1.628c0 .218.043.431.122.627l1.101 2.75a2.25 2.25 0 0 1-.957 2.907l-1.84 1.224a2.25 2.25 0 0 1-1.183.33H9.75"
+                          />
+                        </svg>
+                      }
                     }
                     @if (!sidebarCollapsed()) {
                       <span class="truncate">{{ navItemLabel(item) }}</span>
