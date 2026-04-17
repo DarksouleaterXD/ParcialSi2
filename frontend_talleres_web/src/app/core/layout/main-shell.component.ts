@@ -16,8 +16,10 @@ function initialPackageExpanded(): Record<string, boolean> {
   selector: 'app-main-shell',
   standalone: true,
   imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+  host: {
+    class: 'block min-h-screen',
+  },
   templateUrl: './main-shell.component.html',
-  styleUrl: './main-shell.component.scss',
 })
 export class MainShellComponent implements OnInit {
   protected readonly nav = SHELL_NAV_MODULES;

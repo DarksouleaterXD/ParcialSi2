@@ -26,6 +26,42 @@ For a complete list of available schematics (such as `components`, `directives`,
 ng generate --help
 ```
 
+## Tailwind-only style convention
+
+This frontend is Tailwind-only for component styling.
+
+- New components are generated without `.scss` files by default (`@schematics/angular:component.style = none`).
+- Keep styling in templates with Tailwind utility classes.
+- If a component needs dynamic visual states, prefer `ngClass`/`[class.*]` with Tailwind classes.
+- Do not introduce component-level `scss`, `css`, `sass`, or `less` files unless explicitly approved.
+
+### PR checklist (styles)
+
+- [ ] No new `.scss`/`.sass`/`.less` files were added in `src/app`.
+- [ ] Styling changes use Tailwind utility classes in templates.
+- [ ] Form/input states use utility classes consistently (`focus`, `disabled`, `error`).
+- [ ] No Bootstrap or custom global CSS was introduced for feature-level styling.
+
+### Automated guardrail (no `.scss` in `src/app`)
+
+Run this local check before committing:
+
+```bash
+npm run check:tailwind-only
+```
+
+Behavior:
+
+- Fails with exit code `1` if any `*.scss` file exists under `src/app`.
+- Prints the detected file paths so you can remove them.
+- Passes with exit code `0` when no `.scss` files are found.
+
+If it fails:
+
+1. Remove the reported `.scss` file(s) from `src/app`.
+2. Move styling to Tailwind utility classes in component templates.
+3. Re-run `npm run check:tailwind-only` until it passes.
+
 ## Building
 
 To build the project run:
