@@ -90,7 +90,23 @@ export class AuthService {
 
   private persistSession(res: LoginResponse): void {
     localStorage.setItem('access_token', res.access_token);
-    localStorage.setItem('roles', JSON.stringify(res.roles));
+    const roles = Array.isArray(res.roles) ? res.roles : [];
+    localStorage.setItem('roles', JSON.stringify(roles));
+  }
+
+  /** Lee `roles` del JWT si `localStorage.roles` está ausente o corrupto. */
+  private rolesFromAccessToken(): string[] {
+    const token = localStorage.getItem('access_token');
+    if (!token || token.split('.').length < 2) {
+      return [];
+    }
+    try {
+      const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(atob(b64)) as { roles?: unknown };
+      return Array.isArray(payload.roles) ? (payload.roles as string[]) : [];
+    } catch {
+      return [];
+    }
   }
 
   /** GET /auth/me y actualiza `profile`. */
@@ -196,12 +212,16 @@ export class AuthService {
   }
 
   isAdmin(): boolean {
+    let roles: string[] = [];
     try {
       const raw = localStorage.getItem('roles');
-      const roles: string[] = raw ? (JSON.parse(raw) as string[]) : [];
-      return roles.includes('Administrador');
+      roles = raw ? (JSON.parse(raw) as string[]) : [];
     } catch {
-      return false;
+      roles = [];
     }
+    if (!roles.length) {
+      roles = this.rolesFromAccessToken();
+    }
+    return roles.includes('Administrador');
   }
 }

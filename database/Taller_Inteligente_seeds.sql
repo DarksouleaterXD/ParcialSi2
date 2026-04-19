@@ -19,7 +19,7 @@ INSERT INTO rol (nombre, descripcion) VALUES
     ('Tecnico', 'Técnico / mecánico de taller')
 ON CONFLICT (nombre) DO NOTHING;
 
--- Bases creadas antes de CU3: añadir columna (Taller_Inteligente.sql nuevo ya la incluye en CREATE rol)
+-- Bases creadas antes de migrar roles: añadir columna (Taller_Inteligente.sql nuevo ya la incluye en CREATE rol)
 ALTER TABLE rol ADD COLUMN IF NOT EXISTS permisos_json TEXT;
 
 -- Permisos del rol Administrador alineados con backend (app/.../permisos.py)

@@ -1,6 +1,9 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field, model_validator, field_validator
+
+TechnicianSpecialty = Literal["battery", "tires", "engine", "general"]
 
 
 class TallerTecnicoHealth(BaseModel):
@@ -94,3 +97,49 @@ class TallerListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class TechnicianCreateRequest(BaseModel):
+    nombre: str = Field(..., min_length=1, max_length=100)
+    apellido: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    telefono: str | None = Field(None, max_length=20)
+    especialidad: TechnicianSpecialty
+
+
+class TechnicianUpdateRequest(BaseModel):
+    nombre: str | None = Field(None, min_length=1, max_length=100)
+    apellido: str | None = Field(None, min_length=1, max_length=100)
+    email: EmailStr | None = None
+    telefono: str | None = Field(None, max_length=20)
+    especialidad: TechnicianSpecialty | None = None
+
+
+class TechnicianListItem(BaseModel):
+    id: int
+    nombre: str
+    apellido: str
+    email: str
+    telefono: str | None
+    especialidad: str | None
+    taller_id: int
+    estado: str | None
+
+
+class TechnicianListResponse(BaseModel):
+    items: list[TechnicianListItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class TechnicianCreateResponse(BaseModel):
+    id: int
+    nombre: str
+    apellido: str
+    email: str
+    telefono: str | None
+    especialidad: str | None
+    taller_id: int
+    estado: str | None
+    password_generada: str

@@ -1,8 +1,9 @@
 /** Módulos de dominio — definición de la navegación lateral. */
-export type ShellNavIcon = 'home' | 'users' | 'roles' | 'car' | 'wrench' | 'alert' | 'card' | 'cpu';
+export type ShellNavIcon = 'home' | 'users' | 'roles' | 'car' | 'wrench' | 'alert' | 'card' | 'cpu' | 'list';
 
 export interface ShellNavItem {
-  path: string;
+  /** Comandos absolutos para `RouterLink` (evita ambigüedad con rutas hijas). */
+  routerLink: (string | number)[];
   label: string;
   /** Texto alternativo en el menú cuando el usuario es administrador */
   adminLabel?: string;
@@ -27,17 +28,20 @@ export const SHELL_NAV_MODULES: ShellNavModule[] = [
     title: 'Usuario y autenticación',
     packageIcon: 'users',
     items: [
-      { path: '/dashboard', label: 'Inicio', icon: 'home' },
-      { path: '/vehiculos', label: 'Mis vehículos', adminLabel: 'Vehículos registrados', icon: 'car' },
-      { path: '/users', label: 'Usuarios', adminOnly: true, icon: 'users' },
-      { path: '/roles', label: 'Roles', adminOnly: true, icon: 'roles' },
+      { routerLink: ['/', 'dashboard'], label: 'Inicio', icon: 'home' },
+      { routerLink: ['/', 'vehiculos'], label: 'Mis vehículos', adminLabel: 'Vehículos registrados', icon: 'car' },
+      { routerLink: ['/', 'users'], label: 'Usuarios', adminOnly: true, icon: 'users' },
+      { routerLink: ['/', 'roles'], label: 'Roles', adminOnly: true, icon: 'roles' },
     ],
   },
   {
     packageId: 'taller_tecnico',
     title: 'Taller técnico',
     packageIcon: 'wrench',
-    items: [{ path: '/talleres', label: 'Gestionar talleres', adminOnly: true, icon: 'wrench' }],
+    items: [
+      { routerLink: ['/', 'talleres'], label: 'Gestionar talleres', adminOnly: true, icon: 'wrench' },
+      { routerLink: ['/', 'tecnicos'], label: 'Gestionar técnicos', adminOnly: true, icon: 'users' },
+    ],
   },
   {
     packageId: 'incidentes_servicios',
@@ -59,8 +63,6 @@ export const SHELL_NAV_MODULES: ShellNavModule[] = [
     packageId: 'sistema',
     title: 'Sistema',
     packageIcon: 'cpu',
-    items: [],
-    comingSoon: true,
-    soonIcon: 'cpu',
+    items: [{ routerLink: ['/', 'bitacora'], label: 'Bitácora', adminOnly: true, icon: 'list' }],
   },
 ];

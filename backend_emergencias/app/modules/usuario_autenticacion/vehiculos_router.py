@@ -8,8 +8,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.database import get_db
+from app.modules.incidentes_servicios.constants import TERMINAL_ESTADOS_INCIDENTE
 from app.modules.incidentes_servicios.models import Incidente
-from app.modules.sistema.logger import registrar_bitacora
+from app.modules.sistema.bitacora_service import AUDIT_MODULE_USER_AUTH, registrar_bitacora
 from app.modules.usuario_autenticacion.models import Usuario, Vehiculo
 from app.modules.usuario_autenticacion.schemas import (
     VehiculoCreateRequest,
@@ -20,10 +21,6 @@ from app.modules.usuario_autenticacion.schemas import (
 from app.modules.usuario_autenticacion.services import get_current_user
 
 vehiculos_router = APIRouter(prefix="/vehiculos", tags=["vehiculos"])
-
-TERMINAL_ESTADOS_INCIDENTE = frozenset(
-    {"cerrado", "finalizado", "cancelado", "resuelto", "completado"},
-)
 
 
 def _is_admin(user: Usuario) -> bool:
@@ -114,7 +111,7 @@ def listar_vehiculos(
     registrar_bitacora(
         db,
         id_usuario=user.id,
-        modulo="vehiculos",
+        modulo=AUDIT_MODULE_USER_AUTH,
         accion="LISTAR_VEHICULOS",
         ip=ip,
         resultado="OK",
@@ -164,7 +161,7 @@ def crear_vehiculo(
         registrar_bitacora(
             db,
             id_usuario=user.id,
-            modulo="vehiculos",
+            modulo=AUDIT_MODULE_USER_AUTH,
             accion="CREAR_VEHICULO",
             ip=ip,
             resultado="PLACA_DUPLICADA",
@@ -179,7 +176,7 @@ def crear_vehiculo(
     registrar_bitacora(
         db,
         id_usuario=user.id,
-        modulo="vehiculos",
+        modulo=AUDIT_MODULE_USER_AUTH,
         accion="CREAR_VEHICULO",
         ip=ip,
         resultado="OK",
@@ -202,7 +199,7 @@ def obtener_vehiculo(
     registrar_bitacora(
         db,
         id_usuario=user.id,
-        modulo="vehiculos",
+        modulo=AUDIT_MODULE_USER_AUTH,
         accion="VER_VEHICULO",
         ip=ip,
         resultado="OK",
@@ -264,7 +261,7 @@ def actualizar_vehiculo(
         registrar_bitacora(
             db,
             id_usuario=user.id,
-            modulo="vehiculos",
+            modulo=AUDIT_MODULE_USER_AUTH,
             accion="ACTUALIZAR_VEHICULO",
             ip=ip,
             resultado="PLACA_DUPLICADA",
@@ -275,7 +272,7 @@ def actualizar_vehiculo(
     registrar_bitacora(
         db,
         id_usuario=user.id,
-        modulo="vehiculos",
+        modulo=AUDIT_MODULE_USER_AUTH,
         accion="ACTUALIZAR_VEHICULO",
         ip=ip,
         resultado="OK",
@@ -303,7 +300,7 @@ def eliminar_vehiculo(
         registrar_bitacora(
             db,
             id_usuario=user.id,
-            modulo="vehiculos",
+            modulo=AUDIT_MODULE_USER_AUTH,
             accion="ELIMINAR_VEHICULO",
             ip=ip,
             resultado="INCIDENTE_ACTIVO",
@@ -320,7 +317,7 @@ def eliminar_vehiculo(
     registrar_bitacora(
         db,
         id_usuario=user.id,
-        modulo="vehiculos",
+        modulo=AUDIT_MODULE_USER_AUTH,
         accion="ELIMINAR_VEHICULO",
         ip=ip,
         resultado="OK",

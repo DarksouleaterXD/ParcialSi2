@@ -75,6 +75,7 @@ CREATE TABLE Taller (
 CREATE TABLE Mecanico_Taller (
     id_usuario INT,
     id_taller INT,
+    especialidad VARCHAR(30),
     PRIMARY KEY (id_usuario, id_taller),
     FOREIGN KEY (id_usuario) REFERENCES Usuario(id) ON DELETE CASCADE,
     FOREIGN KEY (id_taller) REFERENCES Taller(id) ON DELETE CASCADE

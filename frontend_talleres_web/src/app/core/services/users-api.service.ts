@@ -94,4 +94,16 @@ export class UsersApiService {
       .delete(`${this.base}/admin/users/${id}`, { responseType: 'text' })
       .pipe(map(() => undefined));
   }
+
+  assignUserRole(userId: number, idRol: number): Observable<UsuarioListItem> {
+    return this.http.post<UsuarioListItem>(`${this.base}/admin/users/${userId}/roles`, {
+      id_rol: idRol,
+    });
+  }
+
+  unassignUserRole(userId: number, rolId: number): Observable<void> {
+    return this.http
+      .delete(`${this.base}/admin/users/${userId}/roles/${rolId}`, { responseType: 'text' })
+      .pipe(map(() => undefined));
+  }
 }

@@ -1,0 +1,359 @@
+<div class="min-h-full bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <!-- Cabecera (sin CTA de alta; misma tarjeta que Usuarios) -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <div class="flex min-w-0 items-start gap-4">
+        <div
+          class="hidden shrink-0 rounded-xl bg-orange-500/10 p-3 text-orange-600 sm:flex sm:items-center sm:justify-center"
+          aria-hidden="true"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-7 w-7">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+            />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h1 class="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">Bitácora</h1>
+          <p class="mt-1 text-sm text-slate-500">
+            Consulta de eventos auditados (solo administrador). Los filtros <span class="font-medium text-slate-700">módulo</span> y
+            <span class="font-medium text-slate-700">acción</span> coinciden exactamente con el valor guardado.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="mt-0.5 h-5 w-5 shrink-0 text-red-500" aria-hidden="true">
+          <path
+            fill-rule="evenodd"
+            d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12ZM12 8.25a.75.75 0 0 1 .75.75v3.75a.75.75 0 0 1-1.5 0V9a.75.75 0 0 1 .75-.75ZM12 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+            clip-rule="evenodd"
+          />
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+      <div class="mb-4 flex items-center gap-2 text-slate-700">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 text-orange-500" aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+          />
+        </svg>
+        <h2 class="text-sm font-semibold text-slate-800">Filtros</h2>
+      </div>
+      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="grid grid-cols-1 gap-4 lg:grid-cols-12 lg:items-end">
+        <div class="lg:col-span-4">
+          <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="bf-usuario">Usuario</label>
+          <div class="relative">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+            <input
+              id="bf-usuario"
+              type="search"
+              formControlName="usuario"
+              placeholder="Nombre, apellido, email o ID"
+              class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+        </div>
+        <div class="lg:col-span-2">
+          <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="bf-fecha">Fecha</label>
+          <div class="relative">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500"
+              aria-hidden="true"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5" />
+            </svg>
+            <input
+              id="bf-fecha"
+              type="date"
+              formControlName="fecha"
+              class="w-full rounded-xl border-0 bg-slate-100 py-2.5 pl-11 pr-3 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-orange-500"
+            />
+          </div>
+        </div>
+        <div class="lg:col-span-2">
+          <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="bf-modulo">Módulo</label>
+          <input
+            id="bf-modulo"
+            type="text"
+            formControlName="modulo"
+            placeholder="Ej. usuario_autenticacion"
+            class="w-full rounded-xl border-0 bg-slate-100 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <div class="lg:col-span-2">
+          <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="bf-accion">Acción</label>
+          <input
+            id="bf-accion"
+            type="text"
+            formControlName="accion"
+            placeholder="Ej. LOGIN"
+            class="w-full rounded-xl border-0 bg-slate-100 px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          />
+        </div>
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end lg:col-span-2">
+          <button
+            type="submit"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 lg:w-auto"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
+              />
+            </svg>
+            Aplicar
+          </button>
+          <button
+            type="button"
+            (click)="clearFilters()"
+            class="inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 lg:w-auto"
+          >
+            Limpiar
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      @if (loading()) {
+        <div class="p-12 text-center text-slate-500">
+          <svg class="mx-auto mb-4 h-9 w-9 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          </svg>
+          <p class="text-sm font-medium text-slate-600">Cargando bitácora…</p>
+        </div>
+      } @else {
+        <div class="-mx-4 overflow-x-auto sm:mx-0">
+          <table class="w-full min-w-[720px] text-left text-sm">
+            <thead>
+              <tr>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Fecha
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Usuario
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Módulo
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Acción
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Resultado
+                </th>
+                <th class="border-b border-slate-200 bg-slate-50 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 sm:px-6">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              @for (row of items(); track row.id) {
+                <tr class="transition-colors hover:bg-slate-50">
+                  <td class="whitespace-nowrap px-4 py-3 align-top text-slate-700 sm:px-6 sm:py-4">
+                    {{ row.fecha_hora | date: 'short' }}
+                  </td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <div class="font-medium text-slate-900">{{ row.usuario.nombre }} {{ row.usuario.apellido }}</div>
+                    <div class="mt-0.5 break-all text-xs text-slate-500">{{ row.usuario.email }}</div>
+                  </td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <span class="inline-block rounded-lg bg-slate-100 px-2 py-0.5 font-mono text-xs text-slate-800">{{ row.modulo }}</span>
+                  </td>
+                  <td class="px-4 py-3 align-top font-medium text-slate-800 sm:px-6 sm:py-4">{{ row.accion }}</td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <span
+                      class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium"
+                      [ngClass]="
+                        row.resultado === 'OK'
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                          : 'border-amber-200 bg-amber-50 text-amber-900'
+                      "
+                    >
+                      {{ row.resultado ?? '—' }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 align-top sm:px-6 sm:py-4">
+                    <div class="flex justify-end">
+                      <button
+                        type="button"
+                        (click)="openDetail(row)"
+                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-orange-50 hover:text-orange-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+                        aria-label="Ver detalle"
+                        title="Ver detalle"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (items().length === 0 && !loading()) {
+                <tr>
+                  <td colspan="6" class="px-6 py-12 text-center text-slate-500">
+                    <div class="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-slate-400" aria-hidden="true">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                        />
+                      </svg>
+                    </div>
+                    <p class="font-medium text-slate-900">No se encontraron registros.</p>
+                    <p class="mt-1 text-sm">Probá con otros filtros.</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div
+          class="flex flex-col gap-3 border-t border-slate-100 bg-slate-50/80 px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6"
+        >
+          <p class="text-center text-slate-500 sm:text-left">
+            Página <span class="font-medium text-slate-900">{{ page() }}</span>
+            <span class="mx-1">—</span>
+            {{ total() }} registros
+          </p>
+          <div class="flex justify-center gap-2 sm:justify-end">
+            <button
+              type="button"
+              (click)="prevPage()"
+              [disabled]="!hasPrevPage()"
+              class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-orange-200 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+              </svg>
+              Anterior
+            </button>
+            <button
+              type="button"
+              (click)="nextPage()"
+              [disabled]="!hasNextPage()"
+              class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-600 transition hover:border-orange-200 hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500/30 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Siguiente
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  </div>
+</div>
+
+@if (detailOpen()) {
+  <div class="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="bitacora-detail-title">
+    <button type="button" class="absolute inset-0 bg-slate-900/50 backdrop-blur-[2px]" (click)="closeDetail()" aria-label="Cerrar"></button>
+    <div
+      class="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-lg flex-col rounded-t-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[85vh] sm:rounded-2xl"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 sm:px-6">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-600" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+              />
+            </svg>
+          </span>
+          <div class="min-w-0">
+            <h2 id="bitacora-detail-title" class="text-lg font-semibold text-slate-800">Detalle del evento</h2>
+            <p class="truncate text-sm text-slate-500">Registro de auditoría</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="closeDetail()"
+          class="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          aria-label="Cerrar"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="space-y-4 overflow-y-auto px-5 py-4 sm:px-6">
+        @if (detailLoading()) {
+          <div class="flex flex-col items-center gap-3 py-8 text-slate-500">
+            <svg class="h-8 w-8 animate-spin text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <p class="text-sm">Cargando detalle…</p>
+          </div>
+        } @else if (detailError()) {
+          <div class="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800" role="alert">
+            <span>{{ detailError() }}</span>
+          </div>
+        } @else if (detail()) {
+          <dl class="grid gap-3 text-sm sm:grid-cols-2">
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Usuario</dt>
+              <dd class="mt-0.5 text-slate-900">{{ detail()!.usuario.nombre }} {{ detail()!.usuario.apellido }}</dd>
+              <dd class="text-xs text-slate-600">{{ detail()!.usuario.email }} · ID {{ detail()!.usuario.id }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Fecha y hora</dt>
+              <dd class="mt-0.5 text-slate-900">{{ detail()!.fecha_hora | date: 'medium' }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">IP origen</dt>
+              <dd class="mt-0.5 font-mono text-slate-900">{{ detail()!.ip_origen ?? '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Módulo</dt>
+              <dd class="mt-0.5 font-mono text-slate-900">{{ detail()!.modulo }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Acción</dt>
+              <dd class="mt-0.5 text-slate-900">{{ detail()!.accion }}</dd>
+            </div>
+            <div class="sm:col-span-2">
+              <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Resultado</dt>
+              <dd class="mt-0.5 text-slate-900">{{ detail()!.resultado ?? '—' }}</dd>
+            </div>
+            <div class="sm:col-span-2 border-t border-slate-100 pt-3 text-xs text-slate-400">ID registro: {{ detail()!.id }}</div>
+          </dl>
+        }
+      </div>
+    </div>
+  </div>
+}

@@ -17,8 +17,23 @@ from app.core.security import (
     password_policy_violation,
     verify_password,
 )
-from app.modules.sistema.logger import registrar_bitacora, revocar_token, token_esta_revocado
+from app.modules.sistema.bitacora_service import (
+    AUDIT_ACTION_LOGIN,
+    AUDIT_ACTION_LOGOUT,
+    AUDIT_ACTION_ROLE_ASSIGN,
+    AUDIT_ACTION_ROLE_CREATE,
+    AUDIT_ACTION_ROLE_DELETE,
+    AUDIT_ACTION_ROLE_UNASSIGN,
+    AUDIT_ACTION_ROLE_UPDATE,
+    AUDIT_ACTION_USUARIO_CREAR,
+    AUDIT_ACTION_USUARIO_DESACTIVAR,
+    AUDIT_ACTION_USUARIO_EDITAR,
+    AUDIT_MODULE_USER_AUTH,
+    registrar_bitacora,
+)
+from app.modules.sistema.logger import revocar_token, token_esta_revocado
 from app.modules.usuario_autenticacion.models import Rol, Usuario, usuario_rol
+from app.modules.usuario_autenticacion.roles_service import count_users_with_role, load_usuario_with_roles
 from app.modules.usuario_autenticacion.permisos import (
     PERMISOS_CATALOGO,
     PERMISOS_VALIDOS,
@@ -39,6 +54,7 @@ from app.modules.usuario_autenticacion.schemas import (
     UsuarioCreateResponse,
     UsuarioListItem,
     UsuarioListResponse,
+    UsuarioRolAssignRequest,
     UsuarioUpdateRequest,
 )
 from app.modules.usuario_autenticacion.services import (
@@ -98,8 +114,8 @@ def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)) ->
         registrar_bitacora(
             db,
             id_usuario=user.id,
-            modulo="autenticacion",
-            accion="LOGIN",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_LOGIN,
             ip=ip,
             resultado="DENEGADO_INACTIVO",
         )
@@ -110,8 +126,8 @@ def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)) ->
         registrar_bitacora(
             db,
             id_usuario=user.id,
-            modulo="autenticacion",
-            accion="LOGIN",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_LOGIN,
             ip=ip,
             resultado="FALLO_CREDENCIAL",
         )
@@ -123,8 +139,8 @@ def login(req: LoginRequest, request: Request, db: Session = Depends(get_db)) ->
     registrar_bitacora(
         db,
         id_usuario=user.id,
-        modulo="autenticacion",
-        accion="LOGIN",
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_LOGIN,
         ip=ip,
         resultado="OK",
     )
@@ -158,13 +174,16 @@ def logout(
     exp_dt = datetime.fromtimestamp(int(exp), timezone.utc) if exp else datetime.now(timezone.utc)
     if jti and not token_esta_revocado(db, jti):
         revocar_token(db, jti=jti, expiracion=exp_dt)
+        logout_outcome = "OK"
+    else:
+        logout_outcome = "SIN_JTI" if not jti else "TOKEN_YA_REVOCADO"
     registrar_bitacora(
         db,
         id_usuario=user_id,
-        modulo="autenticacion",
-        accion="LOGOUT",
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_LOGOUT,
         ip=ip,
-        resultado="OK",
+        resultado=logout_outcome,
     )
     db.commit()
 
@@ -294,8 +313,8 @@ def create_rol(
         registrar_bitacora(
             db,
             id_usuario=admin.id,
-            modulo="roles",
-            accion="CREAR_ROL",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_ROLE_CREATE,
             ip=ip,
             resultado="PERMISOS_INVALIDOS",
         )
@@ -309,8 +328,8 @@ def create_rol(
         registrar_bitacora(
             db,
             id_usuario=admin.id,
-            modulo="roles",
-            accion="CREAR_ROL",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_ROLE_CREATE,
             ip=ip,
             resultado="NOMBRE_DUPLICADO",
         )
@@ -324,10 +343,10 @@ def create_rol(
         registrar_bitacora(
             db,
             id_usuario=admin.id,
-            modulo="roles",
-            accion="CREAR_ROL",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_ROLE_CREATE,
             ip=ip,
-            resultado="OK",
+            resultado=f"OK:r={r.id}"[:50],
         )
         db.commit()
     except IntegrityError:
@@ -386,10 +405,10 @@ def update_rol(
             registrar_bitacora(
                 db,
                 id_usuario=admin.id,
-                modulo="roles",
-                accion="EDITAR_ROL",
+                modulo=AUDIT_MODULE_USER_AUTH,
+                accion=AUDIT_ACTION_ROLE_UPDATE,
                 ip=ip,
-                resultado="OK",
+                resultado=f"OK:r={rol_id}"[:50],
             )
             db.commit()
         except IntegrityError:
@@ -414,8 +433,8 @@ def delete_rol(
         registrar_bitacora(
             db,
             id_usuario=admin.id,
-            modulo="roles",
-            accion="ELIMINAR_ROL",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_ROLE_DELETE,
             ip=ip,
             resultado="ROL_SISTEMA",
         )
@@ -424,15 +443,13 @@ def delete_rol(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Rol del sistema no eliminable",
         )
-    n_users = int(
-        db.execute(select(func.count()).select_from(usuario_rol).where(usuario_rol.c.id_rol == rol_id)).scalar_one(),
-    )
+    n_users = count_users_with_role(db, rol_id)
     if n_users > 0:
         registrar_bitacora(
             db,
             id_usuario=admin.id,
-            modulo="roles",
-            accion="ELIMINAR_ROL",
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_ROLE_DELETE,
             ip=ip,
             resultado="EN_USO",
         )
@@ -445,10 +462,10 @@ def delete_rol(
     registrar_bitacora(
         db,
         id_usuario=admin.id,
-        modulo="roles",
-        accion="ELIMINAR_ROL",
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_ROLE_DELETE,
         ip=ip,
-        resultado="OK",
+        resultado=f"OK:r={rol_id}"[:50],
     )
     db.commit()
 
@@ -520,12 +537,96 @@ def get_user(
     return _to_item(u)
 
 
+@users_router.post("/{user_id}/roles", response_model=UsuarioListItem)
+def assign_user_role(
+    user_id: int,
+    body: UsuarioRolAssignRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+) -> UsuarioListItem:
+    u = load_usuario_with_roles(db, user_id)
+    if u is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    rol = db.get(Rol, body.id_rol)
+    if rol is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Rol inválido")
+    prev_ids = [r.id for r in u.roles]
+    if len(prev_ids) == 1 and prev_ids[0] == body.id_rol:
+        return _to_item(u)
+    ip = _client_ip(request)
+    u.roles.clear()
+    u.roles.append(rol)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No se pudo actualizar el rol") from None
+    for oid in prev_ids:
+        registrar_bitacora(
+            db,
+            id_usuario=admin.id,
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_ROLE_UNASSIGN,
+            ip=ip,
+            resultado=f"u={user_id}:r={oid}"[:50],
+        )
+    registrar_bitacora(
+        db,
+        id_usuario=admin.id,
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_ROLE_ASSIGN,
+        ip=ip,
+        resultado=f"u={user_id}:r={body.id_rol}"[:50],
+    )
+    db.commit()
+    db.refresh(u)
+    return _to_item(u)
+
+
+@users_router.delete("/{user_id}/roles/{rol_id}", status_code=status.HTTP_204_NO_CONTENT)
+def unassign_user_role(
+    user_id: int,
+    rol_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: Usuario = Depends(require_admin),
+) -> None:
+    u = load_usuario_with_roles(db, user_id)
+    if u is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+    if db.get(Rol, rol_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Rol no encontrado")
+    to_remove = next((r for r in u.roles if r.id == rol_id), None)
+    if to_remove is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El usuario no tiene ese rol asignado",
+        )
+    if len(u.roles) <= 1:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="El usuario debe conservar al menos un rol",
+        )
+    u.roles.remove(to_remove)
+    registrar_bitacora(
+        db,
+        id_usuario=admin.id,
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_ROLE_UNASSIGN,
+        ip=_client_ip(request),
+        resultado=f"u={user_id}:r={rol_id}"[:50],
+    )
+    db.commit()
+
+
 @users_router.post("", response_model=UsuarioCreateResponse, status_code=status.HTTP_201_CREATED)
 def create_user(
     body: UsuarioCreateRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     db: Session = Depends(get_db),
-    _admin: Usuario = Depends(require_admin),
+    admin: Usuario = Depends(require_admin),
 ) -> UsuarioCreateResponse:
     email_norm = str(body.email).strip().lower()
     rol = db.get(Rol, body.id_rol)
@@ -563,11 +664,38 @@ def create_user(
     )
     u.roles.append(rol)
     db.add(u)
+    ip = _client_ip(request)
     try:
-        db.commit()
+        db.flush()
     except IntegrityError:
         db.rollback()
+        registrar_bitacora(
+            db,
+            id_usuario=admin.id,
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_USUARIO_CREAR,
+            ip=ip,
+            resultado="EMAIL_DUPLICADO",
+        )
+        db.commit()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="email ya registrado") from None
+    registrar_bitacora(
+        db,
+        id_usuario=admin.id,
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_USUARIO_CREAR,
+        ip=ip,
+        resultado=f"OK:t={u.id}"[:50],
+    )
+    registrar_bitacora(
+        db,
+        id_usuario=admin.id,
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_ROLE_ASSIGN,
+        ip=ip,
+        resultado=f"u={u.id}:r={rol.id}"[:50],
+    )
+    db.commit()
     db.refresh(u)
 
     nombre = f"{u.nombre} {u.apellido}".strip()
@@ -590,12 +718,24 @@ def create_user(
 def update_user(
     user_id: int,
     body: UsuarioUpdateRequest,
+    request: Request,
     db: Session = Depends(get_db),
-    _admin: Usuario = Depends(require_admin),
+    admin: Usuario = Depends(require_admin),
 ) -> UsuarioListItem:
     u = db.execute(select(Usuario).options(selectinload(Usuario.roles)).where(Usuario.id == user_id)).scalar_one_or_none()
     if u is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
+
+    prev_rid = u.roles[0].id if u.roles else None
+    prev = (
+        u.nombre,
+        u.apellido,
+        u.telefono,
+        u.estado,
+        u.email,
+        u.passwordhash,
+        prev_rid,
+    )
 
     if body.nombre is not None:
         u.nombre = body.nombre.strip()
@@ -632,11 +772,69 @@ def update_user(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=policy_msg)
         u.passwordhash = hash_password(pn)
 
+    curr_rid = u.roles[0].id if u.roles else None
+    curr = (
+        u.nombre,
+        u.apellido,
+        u.telefono,
+        u.estado,
+        u.email,
+        u.passwordhash,
+        curr_rid,
+    )
+    if prev == curr:
+        db.commit()
+        db.refresh(u)
+        return _to_item(u)
+
+    ip = _client_ip(request)
     try:
         db.commit()
     except IntegrityError:
         db.rollback()
+        registrar_bitacora(
+            db,
+            id_usuario=admin.id,
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_USUARIO_EDITAR,
+            ip=ip,
+            resultado="EMAIL_DUPLICADO",
+        )
+        db.commit()
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="email ya registrado") from None
+
+    other_changed = prev[0:6] != curr[0:6]
+    rol_changed = prev[6] != curr[6]
+    if other_changed:
+        registrar_bitacora(
+            db,
+            id_usuario=admin.id,
+            modulo=AUDIT_MODULE_USER_AUTH,
+            accion=AUDIT_ACTION_USUARIO_EDITAR,
+            ip=ip,
+            resultado=f"OK:t={user_id}"[:50],
+        )
+    if rol_changed:
+        if prev_rid is not None:
+            registrar_bitacora(
+                db,
+                id_usuario=admin.id,
+                modulo=AUDIT_MODULE_USER_AUTH,
+                accion=AUDIT_ACTION_ROLE_UNASSIGN,
+                ip=ip,
+                resultado=f"u={user_id}:r={prev_rid}"[:50],
+            )
+        if curr_rid is not None:
+            registrar_bitacora(
+                db,
+                id_usuario=admin.id,
+                modulo=AUDIT_MODULE_USER_AUTH,
+                accion=AUDIT_ACTION_ROLE_ASSIGN,
+                ip=ip,
+                resultado=f"u={user_id}:r={curr_rid}"[:50],
+            )
+    if other_changed or rol_changed:
+        db.commit()
     db.refresh(u)
     return _to_item(u)
 
@@ -644,11 +842,20 @@ def update_user(
 @users_router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 def deactivate_user(
     user_id: int,
+    request: Request,
     db: Session = Depends(get_db),
-    _admin: Usuario = Depends(require_admin),
+    admin: Usuario = Depends(require_admin),
 ) -> None:
     u = db.get(Usuario, user_id)
     if u is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
     u.estado = "Inactivo"
+    registrar_bitacora(
+        db,
+        id_usuario=admin.id,
+        modulo=AUDIT_MODULE_USER_AUTH,
+        accion=AUDIT_ACTION_USUARIO_DESACTIVAR,
+        ip=_client_ip(request),
+        resultado=f"OK:t={user_id}"[:50],
+    )
     db.commit()

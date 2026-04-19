@@ -14,6 +14,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    uploads_dir: str = str(_BACKEND_ROOT / "uploads")
+
     database_url: str = "postgresql+psycopg2://postgres:postgres@localhost:5432/emergencias_db"
     jwt_secret: str = "dev-secret-change-me"
     jwt_algorithm: str = "HS256"

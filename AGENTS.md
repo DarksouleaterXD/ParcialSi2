@@ -35,10 +35,18 @@ Modelo relacional (script [Taller_Inteligente.sql](Taller_Inteligente.sql)):
 Semillas iniciales (roles, admin, especialidades de ejemplo): ejecutar [database/Taller_Inteligente_seeds.sql](database/Taller_Inteligente_seeds.sql) después del script principal.
 
 ## 6. Estado Actual del Desarrollo y Reglas
-- **FASE ACTUAL:** Inicialización de arquitecturas.
-- **RESTRICCIÓN:** SOLO implementar el módulo de `usuario_autenticacion` (específicamente el LOGIN). NO implementar lógica de incidentes ni IA hasta que el login esté 100% funcional en las 3 plataformas.
+- **FASE ACTUAL:** Login y autenticación estables; **bitácora** con backend listo y **frontend web de consulta** en el paquete `sistema`.
+- **RESTRICCIÓN:** NO implementar lógica de incidentes ni IA hasta alinear la fase acordada. El login debe seguir operativo en las tres plataformas.
 - **REGLA DE CÓDIGO:** Mantener el nombre de los paquetes de dominio en español, pero usar convenciones de framework en inglés (ej: `login.screen.dart`, `auth.service.ts`, `models.py`).
 - **REGLA DE IA:** La IA no es un módulo aislado, es parte del flujo principal de `incidentes_servicios`.
+
+### Bitácora (auditoría del sistema)
+- **Dominio:** Paquete `sistema` en código; entidad `Bitacora` en PostgreSQL. Login y logout quedan registrados en bitácora; el administrador consulta el historial desde la web.
+- **Backend (implementado):**
+  - Persistencia y contrato tipado en `backend_emergencias/app/modules/sistema/bitacora_service.py` (`BitacoraEventCreate`, `record_audit_event`); revocación JWT en `sistema/logger.py`.
+  - Login y logout escriben filas con `modulo=usuario_autenticacion` y acciones `LOGIN` / `LOGOUT` (sin guardar contraseña ni token completo).
+  - API solo **Administrador:** `GET /api/admin/bitacora` (paginado, query: `page`, `page_size`, `fecha`, `usuario`, `modulo`, `accion`) y `GET /api/admin/bitacora/{id}`. Los filtros `modulo` y `accion` son **coincidencia exacta** con la columna (p. ej. `usuario_autenticacion`, `LOGIN`), no búsqueda parcial.
+- **Frontend web (en curso):** pantalla de consulta en `frontend_talleres_web/src/app/features/sistema/bitacora/` (`BitacoraApiService`, página standalone, navegación bajo el acordeón **Sistema**). Cliente móvil Flutter: pendiente cuando corresponda la fase.
 
 ## 7. Reglas de Estilo UI/UX (Cursor Guidelines)
 Para que las herramientas de IA generen código con un estándar visual premium y profesional:
@@ -52,9 +60,9 @@ Para que las herramientas de IA generen código con un estándar visual premium 
 - **Estilo y CSS:** Usar EXCLUSIVAMENTE Tailwind CSS. Prohibido usar CSS puro o Bootstrap.
 - **Diseño Profesional:** Estilo minimalista y limpio (tipo Vercel/Stripe).
   - Usar colores neutros de Tailwind (`slate` o `zinc`) para fondos y textos.
-  - Usar un color primario vibrante (ej: `indigo-600` o `blue-600`) para llamadas a la acción (CTAs).
+  - Usar **naranja** (`orange-500` / `orange-600`) como color primario para CTAs y acentos, alineado al panel (borde lateral y botones activos).
   - Componentes de UI: Bordes redondeados (`rounded-xl`), sombras suaves (`shadow-sm`, `shadow-md`), y mucho espacio en blanco (`padding` y `gap`).
-  - Inputs: Estados claros (focus, error, disabled) usando `focus:ring-2`, `focus:border-indigo-500`.
+  - Inputs: Estados claros (focus, error, disabled) usando `focus:ring-2`, `focus:border-orange-500`.
 - **Estado:** Usar Signals (`signal()`, `computed()`) para el manejo de estado reactivo local.
 - **Validaciones:** Formularios reactivos (`ReactiveFormsModule`) con feedback visual en tiempo real.
 
@@ -109,10 +117,81 @@ flutter run --dart-define=API_BASE=http://10.0.2.2:8000/api
 flutter run --dart-define=API_BASE=http://localhost:8000/api
 ```
 
-## 9. Casos de Uso Core y Flujos (Dominio)
+## 9. Flujos de dominio (resumen)
 
-Resumen de las reglas arquitectónicas derivadas de los Casos de Uso y diagramas de Robustez:
+Reglas arquitectónicas que el código debe respetar:
 
-1. **CU01 - Gestionar Usuario**: Exclusivo para Administrador. Requiere validación de email único, generación automática de contraseña y envío de credenciales por correo electrónico. La entidad de Usuario debe incluir estrictamente los campos: `id`, `apellido`, `email`, `password`, `telefono`, `foto`, `latitud`, `longitud` y `fecharegistro`. Todas las acciones (crear, actualizar, eliminar) DEBEN registrarse en la entidad `Bitacora`. Este flujo incluye lógicamente CU03 (Roles) y CU08 (Bitácora).
-2. **CU02 - Gestionar Inicio de Sesión**: Aplica para Administrador, Cliente y Mecánico (Técnico). Valida credenciales, genera el token JWT, registra de manera obligatoria el login y logout en la `Bitacora`, y redirecciona según el rol del usuario.
-3. **CU03 - Gestionar Roles**: Exclusivo para Administrador. Gestiona roles y sus permisos asociados. Existe una restricción estricta: no se puede eliminar un rol si tiene usuarios asignados. Todas las acciones se registran en la `Bitacora`.
+1. **Usuarios (administración):** exclusivo administrador. Validación de email único, contraseña generada y envío de credenciales. La entidad `Usuario` incluye los campos del modelo relacional (`id`, `apellido`, `email`, `password`, `telefono`, `foto`, `latitud`, `longitud`, `fecharegistro`). Las altas, bajas y cambios relevantes deben reflejarse en `Bitacora`. La gestión de roles enlaza con esta misma trazabilidad.
+2. **Inicio de sesión:** administrador, cliente y técnico. Credenciales + JWT; **login y logout** deben registrarse en `Bitacora`; la app redirige según el rol.
+3. **Roles:** exclusivo administrador. Permisos asociados; no eliminar un rol si tiene usuarios asignados. Las acciones sobre roles quedan auditadas en `Bitacora`.
+
+## 10. App móvil Flutter — cliente (`app_emergencias_cliente`)
+
+### Alcance y restricciones
+- **Solo** flujos del **cliente** (conductor) en esta línea de trabajo incremental. No se implementa UI de administración web, gestión de talleres, técnicos ni roles en el móvil.
+- Si un usuario **Administrador** inicia sesión en la app, se muestra un aviso y **cerrar sesión**; la gestión es en la web.
+- **Dominio en español** en rutas de carpetas (`usuario_autenticacion`, etc.); **código técnico en inglés** (clases, métodos, variables).
+- **HTTP:** paquete `http` + **sesión** en `flutter_secure_storage`. **Navegación:** `Navigator` (sin go_router obligatorio).
+- **API base:** constante `kApiBase` en `lib/core/api_config.dart`, sobreescribible con:
+  `flutter run --dart-define=API_BASE=http://10.0.2.2:8000/api`
+- **No inventar endpoints:** antes de cada pantalla, contrastar con `backend_emergencias` (routers bajo prefijo `/api` en `app/main.py`). Si no existe ruta, dejar **TODO** explícito en código o checklist, sin datos mock que simulen negocio.
+
+### Estructura por feature (recomendada)
+Bajo `lib/features/<paquete_dominio>/`:
+- `data/` — llamadas HTTP, DTOs, implementación de repositorio.
+- `domain/` — contratos, validaciones de dominio ligeras, entidades si aplica.
+- `presentation/` — pantallas, widgets, estado local (`ChangeNotifier` / `ValueNotifier` / `StatefulWidget`).
+
+**Core compartido** (`lib/core/`): configuración API, almacenamiento de token, cliente autenticado, parseo de errores FastAPI.
+
+### Inicialización del proyecto móvil
+```powershell
+cd app_emergencias_cliente
+flutter pub get
+# Si falta plataforma:
+flutter create . --project-name app_emergencias_cliente
+flutter run --dart-define=API_BASE=http://localhost:8000/api
+# Emulador Android → backend en la máquina host:
+flutter run --dart-define=API_BASE=http://10.0.2.2:8000/api
+```
+
+### Roadmap casos de uso cliente (orden incremental)
+| # | Área | Estado móvil |
+|---|------|----------------|
+| 1 | Inicio de sesión / sesión / logout | **Hecho:** validación de formulario alineada a política de contraseña del backend, mensajes por código HTTP, `GET /auth/me` al arranque para invalidar token revocado/expirado, `AuthorizedClient` listo para llamadas con Bearer y limpieza en 401. |
+| 2 | Perfil de usuario | Pendiente: pantalla + `GET/PATCH /auth/me`. |
+| 3 | Vehículos | Pendiente: CRUD vía `GET/POST/PATCH/DELETE /vehiculos` (JWT cliente). |
+| 4 | Reportar emergencia | **Bloqueado** hasta existir API real en `incidentes_servicios` (hoy solo `GET /api/incidentes-servicios/health` stub). |
+| 5 | Estado de solicitud | Idem incidentes: sin endpoints de lectura de incidente para cliente. |
+| 6 | Cancelar solicitud | Idem. |
+| 7 | Pagos | **Bloqueado:** `GET /api/pagos/health` stub; sin flujo de pago para cliente. |
+| 8 | Calificaciones | Sin endpoints expuestos para cliente en el backend actual. |
+| 9 | Notificaciones | Sin API de listado para cliente (bitácora es admin-only). |
+| 10 | Historial de servicios | Depende de incidentes/pagos; no hay listado unificado aún. |
+
+### Tabla técnica — endpoints útiles para cliente (verificados en backend)
+| Necesidad | Método y ruta | Notas |
+|-----------|----------------|--------|
+| Login | `POST /api/auth/login` | Body JSON `email`, `password`. Respuesta: `access_token`, `roles`, `expires_in`, `redirect_hint`. |
+| Validar sesión / perfil | `GET /api/auth/me` | Bearer. Usado al arranque para descartar sesión inválida. |
+| Logout | `POST /api/auth/logout` | Bearer; revoca `jti` en servidor. |
+| Actualizar perfil | `PATCH /api/auth/me` | Bearer; campos según `ProfileSelfUpdateRequest` en backend. |
+| Cambiar contraseña | `POST /api/auth/me/change-password` | Bearer; cuerpo según backend. |
+| Listar vehículos | `GET /api/vehiculos?page=&page_size=` | Bearer; cliente solo ve los propios. |
+| Crear vehículo | `POST /api/vehiculos` | Bearer; **no** admin. |
+| Ver / editar / borrar vehículo | `GET`, `PATCH`, `DELETE` `/api/vehiculos/{id}` | Bearer; reglas de acceso en router de vehículos. |
+| Incidentes / pagos / notificaciones cliente | — | **No implementados** para consumo cliente en la versión actual del API. |
+
+### Archivos clave tras el primer incremento (login)
+- `lib/core/api_errors.dart` — mensaje desde `detail` de FastAPI.
+- `lib/core/auth_api.dart` — `login`, `logout`, `isSessionValid` (`/auth/me`).
+- `lib/core/authorized_client.dart` — requests autenticadas; en **401** limpia `AuthStorage` y lanza `SessionExpiredException`.
+- `lib/core/auth_storage.dart` — token + roles JSON.
+- `lib/features/usuario_autenticacion/domain/login_validators.dart` — reglas alineadas a contraseña mínima 8 + letra + dígito.
+- `lib/features/usuario_autenticacion/data/auth_remote_data_source.dart` — capa fina sobre `AuthApi` (reutilizable en tests).
+- `lib/features/usuario_autenticacion/presentation/*` — pantallas de login, home cliente/técnico y aviso admin.
+- `lib/main.dart` — `MaterialApp` + arranque con validación de token.
+
+### Calidad UI (Flutter)
+- Material 3; semilla naranja alineada a la web (`ColorScheme.fromSeed` ~ `#F97316`).
+- Formularios con feedback inmediato; evitar spinners eternos en listas (estados vacío / error / carga acotada).

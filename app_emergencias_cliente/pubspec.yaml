@@ -1,5 +1,5 @@
 name: app_emergencias_cliente
-description: App móvil cliente/técnico — autenticación (CU2).
+description: App móvil cliente/técnico — plan incremental por casos de uso (sin UI admin/taller).
 publish_to: "none"
 version: 0.1.0+1
 

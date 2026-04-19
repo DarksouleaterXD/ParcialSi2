@@ -165,10 +165,10 @@
                   }
                 </div>
               }
-              @for (item of mod.items; track item.path) {
+              @for (item of mod.items; track item.routerLink.join('-')) {
                 @if (showItem(item)) {
                   <a
-                    [routerLink]="item.path"
+                    [routerLink]="item.routerLink"
                     routerLinkActive="bg-orange-600 text-white shadow-md shadow-orange-950/40"
                     [routerLinkActiveOptions]="{ exact: true }"
                     [attr.title]="sidebarCollapsed() ? navItemLabel(item) : null"
@@ -215,6 +215,29 @@
                             stroke-linejoin="round"
                             d="M11.42 15.17 17.25 21A2.652 2.652 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655-5.653a2.548 2.548 0 0 1-.722-1.794V5.25a2.25 2.25 0 0 1 2.25-2.25H13.5a2.25 2.25 0 0 1 2.25 2.25v1.628c0 .218.043.431.122.627l1.101 2.75a2.25 2.25 0 0 1-.957 2.907l-1.84 1.224a2.25 2.25 0 0 1-1.183.33H9.75"
                           />
+                        </svg>
+                      }
+                      @case ('list') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM3.75 12h.007v.008H3.75V12Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm-.375 5.25h.007v.008H3.75v-.008Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+                          />
+                        </svg>
+                      }
+                      @case ('cpu') {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 16.5V21m3.75-18v1.5m0 16.5V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z"
+                          />
+                        </svg>
+                      }
+                      @default {
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5 shrink-0 opacity-80" aria-hidden="true">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12" />
                         </svg>
                       }
                     }

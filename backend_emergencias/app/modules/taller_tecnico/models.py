@@ -1,8 +1,18 @@
-"""Modelo SQLAlchemy Taller (tabla `taller`)."""
+"""Modelos SQLAlchemy del dominio taller_tecnico."""
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, Numeric, String
 
 from app.core.database import Base
+
+
+class MecanicoTaller(Base):
+    """Vínculo mecánico (usuario técnico) ↔ taller; `especialidad` alinea con valores de API (battery, tires, …)."""
+
+    __tablename__ = "mecanico_taller"
+
+    id_usuario = Column(Integer, ForeignKey("usuario.id", ondelete="CASCADE"), primary_key=True)
+    id_taller = Column(Integer, ForeignKey("taller.id", ondelete="CASCADE"), primary_key=True)
+    especialidad = Column(String(30), nullable=True)
 
 
 class Taller(Base):

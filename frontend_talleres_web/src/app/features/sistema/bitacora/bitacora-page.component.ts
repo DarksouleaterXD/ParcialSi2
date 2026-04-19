@@ -1,5 +1,5 @@
 import { CommonModule, DatePipe } from '@angular/common';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
   BitacoraApiService,
@@ -17,17 +17,20 @@ export class BitacoraPageComponent implements OnInit {
   private readonly api = inject(BitacoraApiService);
   private readonly fb = inject(FormBuilder);
 
-  items: BitacoraItem[] = [];
-  total = 0;
-  page = 1;
-  pageSize = 10;
-  loading = false;
-  errorMessage = '';
+  readonly items = signal<BitacoraItem[]>([]);
+  readonly total = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = signal(10);
+  readonly loading = signal(false);
+  readonly errorMessage = signal('');
 
   readonly detailOpen = signal(false);
-  detailLoading = false;
-  detailError = '';
-  detail: BitacoraDetailResponse | null = null;
+  readonly detailLoading = signal(false);
+  readonly detailError = signal('');
+  readonly detail = signal<BitacoraDetailResponse | null>(null);
+
+  readonly hasPrevPage = computed(() => this.page() > 1);
+  readonly hasNextPage = computed(() => this.page() * this.pageSize() < this.total());
 
   readonly filterForm = this.fb.nonNullable.group({
     fecha: [''],
@@ -42,12 +45,12 @@ export class BitacoraPageComponent implements OnInit {
 
   loadBitacora(): void {
     const f = this.filterForm.getRawValue();
-    this.loading = true;
-    this.errorMessage = '';
+    this.loading.set(true);
+    this.errorMessage.set('');
     this.api
       .listBitacora({
-        page: this.page,
-        pageSize: this.pageSize,
+        page: this.page(),
+        pageSize: this.pageSize(),
         fecha: f.fecha || undefined,
         modulo: f.modulo || undefined,
         usuario: f.usuario || undefined,
@@ -55,19 +58,19 @@ export class BitacoraPageComponent implements OnInit {
       })
       .subscribe({
         next: (res) => {
-          this.items = res.items;
-          this.total = res.total;
-          this.loading = false;
+          this.items.set(res.items);
+          this.total.set(res.total);
+          this.loading.set(false);
         },
-        error: (err) => {
-          this.loading = false;
-          this.errorMessage = err?.error?.detail ?? 'No se pudo cargar la bitácora.';
+        error: (err: { error?: { detail?: string } }) => {
+          this.loading.set(false);
+          this.errorMessage.set(err?.error?.detail ?? 'No se pudo cargar la bitácora.');
         },
       });
   }
 
   applyFilters(): void {
-    this.page = 1;
+    this.page.set(1);
     this.loadBitacora();
   }
 
@@ -78,45 +81,45 @@ export class BitacoraPageComponent implements OnInit {
       usuario: '',
       accion: '',
     });
-    this.page = 1;
+    this.page.set(1);
     this.loadBitacora();
   }
 
   prevPage(): void {
-    if (this.page > 1) {
-      this.page -= 1;
+    if (this.page() > 1) {
+      this.page.update((p) => p - 1);
       this.loadBitacora();
     }
   }
 
   nextPage(): void {
-    if (this.page * this.pageSize < this.total) {
-      this.page += 1;
+    if (this.page() * this.pageSize() < this.total()) {
+      this.page.update((p) => p + 1);
       this.loadBitacora();
     }
   }
 
   openDetail(row: BitacoraItem): void {
     this.detailOpen.set(true);
-    this.detailLoading = true;
-    this.detailError = '';
-    this.detail = null;
+    this.detailLoading.set(true);
+    this.detailError.set('');
+    this.detail.set(null);
     this.api.getDetail(row.id).subscribe({
       next: (res) => {
-        this.detail = res;
-        this.detailLoading = false;
+        this.detail.set(res);
+        this.detailLoading.set(false);
       },
-      error: (err) => {
-        this.detailLoading = false;
-        this.detailError = err?.error?.detail ?? 'No se pudo cargar el detalle.';
+      error: (err: { error?: { detail?: string } }) => {
+        this.detailLoading.set(false);
+        this.detailError.set(err?.error?.detail ?? 'No se pudo cargar el detalle.');
       },
     });
   }
 
   closeDetail(): void {
     this.detailOpen.set(false);
-    this.detailLoading = false;
-    this.detailError = '';
-    this.detail = null;
+    this.detailLoading.set(false);
+    this.detailError.set('');
+    this.detail.set(null);
   }
 }

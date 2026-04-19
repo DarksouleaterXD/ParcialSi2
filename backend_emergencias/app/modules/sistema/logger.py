@@ -1,28 +1,9 @@
-"""Bitácora de auditoría y revocación de JWT (logout)."""
+"""Revocación de JWT en logout (TokenRevocado). La bitácora queda en `bitacora_service`."""
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.modules.sistema.models import Bitacora, TokenRevocado
-
-
-def registrar_bitacora(
-    db: Session,
-    *,
-    id_usuario: int,
-    modulo: str,
-    accion: str,
-    ip: str | None,
-    resultado: str | None,
-) -> None:
-    row = Bitacora(
-        id_usuario=id_usuario,
-        modulo=modulo,
-        accion=accion,
-        iporigen=ip,
-        resultado=resultado,
-    )
-    db.add(row)
+from app.modules.sistema.models import TokenRevocado
 
 
 def revocar_token(db: Session, *, jti: str, expiracion: datetime) -> None:

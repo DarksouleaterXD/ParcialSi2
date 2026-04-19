@@ -1,4 +1,4 @@
-"""Taller: columnas email y horario_atencion (CU06).
+"""Taller: columnas email y horario_atencion.
 
 Idempotente: solo añade columnas si no existen (bases creadas antes del parche SQL).
 

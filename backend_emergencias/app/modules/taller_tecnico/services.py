@@ -1,4 +1,4 @@
-"""Lógica de negocio — gestión de talleres (CU06)."""
+"""Lógica de negocio — gestión de talleres."""
 
 from decimal import Decimal
 

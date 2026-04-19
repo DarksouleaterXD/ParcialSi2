@@ -49,7 +49,20 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/taller_tecnico/talleres/talleres-page.component').then((m) => m.TalleresPageComponent),
       },
+      {
+        path: 'tecnicos',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/taller_tecnico/technicians/technicians-page.component').then((m) => m.TechniciansPageComponent),
+      },
+      {
+        path: 'bitacora',
+        canActivate: [adminGuard],
+        loadComponent: () =>
+          import('./features/sistema/bitacora/bitacora-page.component').then((m) => m.BitacoraPageComponent),
+      },
     ],
   },
-  { path: '**', redirectTo: 'login' },
+  /** Rutas desconocidas: ir al shell; `authGuard` envía a login si no hay sesión. */
+  { path: '**', redirectTo: 'dashboard' },
 ];

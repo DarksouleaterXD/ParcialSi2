@@ -129,6 +129,10 @@ class UsuarioUpdateRequest(BaseModel):
     password_confirmacion: str | None = Field(None, max_length=128)
 
 
+class UsuarioRolAssignRequest(BaseModel):
+    id_rol: int = Field(..., ge=1)
+
+
 # --- Vehículos ---
 
 

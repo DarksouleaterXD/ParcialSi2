@@ -31,6 +31,8 @@ def client() -> Generator[TestClient, None, None]:
         seed.add(rol)
         rol_cliente = Rol(nombre="Cliente", descripcion="Test")
         seed.add(rol_cliente)
+        rol_tecnico = Rol(nombre="Tecnico", descripcion="Mecánico")
+        seed.add(rol_tecnico)
         user = Usuario(
             nombre="Test",
             apellido="Usuario",

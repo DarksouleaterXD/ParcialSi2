@@ -2,6 +2,8 @@ import { CommonModule } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { catchError, map, mergeMap, of } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../core/services/auth.service';
 import { emailFlexibleValidator } from '../validators/login.validators';
 
@@ -58,20 +60,34 @@ export class LoginComponent implements OnInit {
     }
     const { email, password } = this.form.getRawValue();
     this.loading = true;
-    this.auth.login({ email, password }).subscribe({
-      next: (res) => {
-        this.loading = false;
-        if (res.roles.includes('Administrador')) {
-          void this.router.navigateByUrl('/dashboard');
-          return;
-        }
-        void this.router.navigateByUrl('/vehiculos');
-      },
-      error: (err: { error?: { detail?: unknown } }) => {
-        this.loading = false;
-        const detail = err?.error?.detail;
-        this.serverError = typeof detail === 'string' ? detail : 'Credenciales inválidas o error de red.';
-      },
-    });
+    this.auth
+      .login({ email, password })
+      .pipe(
+        mergeMap((res) => {
+          if (!environment.authMock) {
+            return this.auth.refreshProfile().pipe(
+              catchError(() => of(null)),
+              map(() => res),
+            );
+          }
+          return of(res);
+        }),
+      )
+      .subscribe({
+        next: (res) => {
+          this.loading = false;
+          const admin = res.roles.includes('Administrador') || this.auth.isAdmin();
+          if (admin) {
+            void this.router.navigateByUrl('/dashboard');
+            return;
+          }
+          void this.router.navigateByUrl('/vehiculos');
+        },
+        error: (err: { error?: { detail?: unknown } }) => {
+          this.loading = false;
+          const detail = err?.error?.detail;
+          this.serverError = typeof detail === 'string' ? detail : 'Credenciales inválidas o error de red.';
+        },
+      });
   }
 }

@@ -2,7 +2,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -19,6 +19,39 @@ from app.modules.usuario_autenticacion.services import require_admin
 
 router = APIRouter(prefix="/sistema", tags=["sistema"])
 bitacora_router = APIRouter(prefix="/admin/bitacora", tags=["admin-sistema"])
+
+
+def _bitacora_filter_clauses(
+    *,
+    fecha: date | None,
+    modulo: str | None,
+    accion: str | None,
+    usuario: str | None,
+) -> list:
+    clauses: list = []
+    if fecha is not None:
+        desde = datetime.combine(fecha, time.min)
+        hasta = desde + timedelta(days=1)
+        clauses.append(and_(Bitacora.fechahora >= desde, Bitacora.fechahora < hasta))
+
+    if modulo and modulo.strip():
+        clauses.append(Bitacora.modulo == modulo.strip())
+
+    if accion and accion.strip():
+        clauses.append(Bitacora.accion == accion.strip())
+
+    if usuario and usuario.strip():
+        term = usuario.strip()
+        cond = or_(
+            Usuario.nombre.ilike(f"%{term}%"),
+            Usuario.apellido.ilike(f"%{term}%"),
+            Usuario.email.ilike(f"%{term}%"),
+        )
+        if term.isdigit():
+            cond = or_(cond, Usuario.id == int(term))
+        clauses.append(cond)
+
+    return clauses
 
 
 def _to_item(bitacora: Bitacora, usuario: Usuario) -> BitacoraListItem:
@@ -51,35 +84,22 @@ def list_bitacora(
     page: Annotated[int, Query(ge=1)] = 1,
     page_size: Annotated[int, Query(ge=1, le=100)] = 20,
     fecha: Annotated[date | None, Query(description="Fecha exacta YYYY-MM-DD")] = None,
-    modulo: Annotated[str | None, Query(description="Filtro por módulo")] = None,
+    modulo: Annotated[str | None, Query(description="Filtro exacto por módulo (columna modulo)")] = None,
     usuario: Annotated[str | None, Query(description="Filtro por nombre, apellido, email o ID")] = None,
-    accion: Annotated[str | None, Query(description="Filtro por acción")] = None,
+    accion: Annotated[str | None, Query(description="Filtro exacto por acción (columna accion)")] = None,
 ) -> BitacoraListResponse:
-    stmt = select(Bitacora, Usuario).join(Usuario, Usuario.id == Bitacora.id_usuario)
+    clauses = _bitacora_filter_clauses(fecha=fecha, modulo=modulo, accion=accion, usuario=usuario)
+    join_on = Usuario.id == Bitacora.id_usuario
 
-    if fecha is not None:
-        desde = datetime.combine(fecha, time.min)
-        hasta = desde + timedelta(days=1)
-        stmt = stmt.where(Bitacora.fechahora >= desde, Bitacora.fechahora < hasta)
+    stmt = select(Bitacora, Usuario).join(Usuario, join_on)
+    for c in clauses:
+        stmt = stmt.where(c)
 
-    if modulo and modulo.strip():
-        stmt = stmt.where(Bitacora.modulo.ilike(f"%{modulo.strip()}%"))
+    count_stmt = select(func.count(Bitacora.id)).select_from(Bitacora).join(Usuario, join_on)
+    for c in clauses:
+        count_stmt = count_stmt.where(c)
 
-    if accion and accion.strip():
-        stmt = stmt.where(Bitacora.accion.ilike(f"%{accion.strip()}%"))
-
-    if usuario and usuario.strip():
-        term = usuario.strip()
-        cond = or_(
-            Usuario.nombre.ilike(f"%{term}%"),
-            Usuario.apellido.ilike(f"%{term}%"),
-            Usuario.email.ilike(f"%{term}%"),
-        )
-        if term.isdigit():
-            cond = or_(cond, Usuario.id == int(term))
-        stmt = stmt.where(cond)
-
-    total = int(db.execute(select(func.count()).select_from(stmt.subquery())).scalar_one())
+    total = int(db.execute(count_stmt).scalar_one())
     rows = db.execute(
         stmt.order_by(Bitacora.fechahora.desc(), Bitacora.id.desc())
         .offset((page - 1) * page_size)
