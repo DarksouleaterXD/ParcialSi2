@@ -27,3 +27,7 @@ build/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Stripe CLI portable descargado para pruebas locales (no versionar)
+backend_emergencias/_stripe_cli/
+backend_emergencias/_stripe_cli.zip

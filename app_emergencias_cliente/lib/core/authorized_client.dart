@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import 'api_config.dart';
 import 'api_errors.dart';
@@ -51,19 +52,71 @@ class AuthorizedClient {
     return _handleJson(res);
   }
 
-  Future<Map<String, dynamic>> postJson(String path, {Map<String, dynamic>? body}) async {
+  /// Multipart POST (e.g. evidencias con `archivo`). Field names must match el backend.
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    List<http.MultipartFile> files = const [],
+    Map<String, String> extraHeaders = const {},
+  }) async {
     final token = await _storage.readToken();
     if (token == null || token.isEmpty) {
       throw SessionExpiredException('No hay sesión activa.');
     }
+    final uri = _uri(path);
+    final req = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer $token'
+      ..headers['Accept'] = 'application/json'
+      ..headers.addAll(extraHeaders)
+      ..fields.addAll(fields)
+      ..files.addAll(files);
+    late http.Response res;
+    try {
+      final streamed = await _http.send(req);
+      res = await http.Response.fromStream(streamed);
+    } on SocketException {
+      throw ApiClientException(statusCode: 0, message: 'No se pudo conectar con el servidor');
+    } on http.ClientException {
+      throw ApiClientException(statusCode: 0, message: 'No se pudo conectar con el servidor');
+    }
+    return _handleJson(res);
+  }
+
+  /// Helper for a single file field `archivo` (CU-09 evidencias).
+  static http.MultipartFile fileField({
+    required String fieldName,
+    required List<int> bytes,
+    required String filename,
+    required String mimeType,
+  }) {
+    final ct = MediaType.parse(mimeType);
+    return http.MultipartFile.fromBytes(
+      fieldName,
+      bytes,
+      filename: filename,
+      contentType: ct,
+    );
+  }
+
+  Future<Map<String, dynamic>> postJson(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String> extraHeaders = const {},
+  }) async {
+    final token = await _storage.readToken();
+    if (token == null || token.isEmpty) {
+      throw SessionExpiredException('No hay sesión activa.');
+    }
+    final headers = <String, String>{
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      ...extraHeaders,
+    };
     final res = await _send(
       () => _http.post(
         _uri(path),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
+        headers: headers,
         body: body == null ? null : jsonEncode(body),
       ),
     );

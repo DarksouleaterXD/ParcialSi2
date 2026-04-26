@@ -32,16 +32,36 @@ class Vehicle {
     return Vehicle(
       id: (json['id'] as num?)?.toInt() ?? 0,
       idUsuario: (json['id_usuario'] as num?)?.toInt() ?? 0,
-      placa: json['placa'] as String? ?? '',
-      marca: json['marca'] as String? ?? '',
-      modelo: json['modelo'] as String? ?? '',
+      placa: _jsonReqStr(json['placa']),
+      marca: _jsonReqStr(json['marca']),
+      modelo: _jsonReqStr(json['modelo']),
       anio: anio,
-      color: json['color'] as String?,
-      tipoSeguro: json['tipo_seguro'] as String?,
-      fotoFrontal: json['foto_frontal'] as String?,
-      propietarioNombre: json['propietario_nombre'] as String?,
-      propietarioEmail: json['propietario_email'] as String?,
+      color: _jsonOptStr(json['color']),
+      tipoSeguro: _jsonOptStr(json['tipo_seguro']),
+      fotoFrontal: _jsonOptStr(json['foto_frontal']),
+      propietarioNombre: _jsonOptStr(json['propietario_nombre']),
+      propietarioEmail: _jsonOptStr(json['propietario_email']),
     );
+  }
+
+  static String _jsonReqStr(Object? v) {
+    if (v == null) {
+      return '';
+    }
+    if (v is String) {
+      return v;
+    }
+    return v.toString();
+  }
+
+  static String? _jsonOptStr(Object? v) {
+    if (v == null) {
+      return null;
+    }
+    if (v is String) {
+      return v;
+    }
+    return v.toString();
   }
 }
 

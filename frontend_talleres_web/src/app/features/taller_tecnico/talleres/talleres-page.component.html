@@ -196,6 +196,50 @@
               <input id="c-lon" type="number" step="any" formControlName="longitud" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
             </div>
           </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-medium text-slate-600">Seleccionar en mapa (OpenStreetMap)</p>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="centerCreateMapOnCurrentLocation()"
+                  [disabled]="geolocatingCreate"
+                  class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  Centrar mapa
+                </button>
+                <button
+                  type="button"
+                  (click)="useCurrentLocationCreate()"
+                  [disabled]="geolocatingCreate"
+                  class="rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-700 hover:bg-orange-100 disabled:opacity-60"
+                >
+                  {{ geolocatingCreate ? 'Ubicando…' : 'Usar mi ubicación' }}
+                </button>
+              </div>
+            </div>
+            <div class="relative">
+              <div
+                id="create-map"
+                [class]="
+                  'h-56 w-full rounded-xl border ' + (hasCreateCoords() ? 'border-slate-200' : 'border-red-300')
+                "
+              ></div>
+              @if (!hasCreateCoords()) {
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+                  >
+                    <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                    Falta seleccionar coordenadas
+                  </span>
+                </div>
+              }
+            </div>
+            <p [class]="hasCreateCoords() ? 'text-[11px] text-slate-400' : 'text-[11px] text-red-600'">
+              Hacé click en el mapa o arrastrá el marcador para actualizar latitud/longitud.
+            </p>
+          </div>
           <p class="text-[11px] text-slate-400">Rango: latitud -90 a 90, longitud -180 a 180.</p>
           <div class="grid grid-cols-2 gap-3">
             <div>
@@ -262,6 +306,47 @@
             <div>
               <label class="mb-1 block text-xs font-medium text-slate-600" for="e-lon">Longitud</label>
               <input id="e-lon" type="number" step="any" formControlName="longitud" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+            </div>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <p class="text-xs font-medium text-slate-600">Ajustar ubicación en mapa</p>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  (click)="centerEditMapOnCurrentLocation()"
+                  [disabled]="geolocatingEdit"
+                  class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                >
+                  Centrar mapa
+                </button>
+                <button
+                  type="button"
+                  (click)="useCurrentLocationEdit()"
+                  [disabled]="geolocatingEdit"
+                  class="rounded-lg border border-orange-200 bg-orange-50 px-2.5 py-1 text-xs font-medium text-orange-700 hover:bg-orange-100 disabled:opacity-60"
+                >
+                  {{ geolocatingEdit ? 'Ubicando…' : 'Usar mi ubicación' }}
+                </button>
+              </div>
+            </div>
+            <div class="relative">
+              <div
+                id="edit-map"
+                [class]="
+                  'h-56 w-full rounded-xl border ' + (hasEditCoords() ? 'border-slate-200' : 'border-red-300')
+                "
+              ></div>
+              @if (!hasEditCoords()) {
+                <div class="pointer-events-none absolute inset-0 flex items-center justify-center">
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700"
+                  >
+                    <span class="h-2 w-2 rounded-full bg-red-500"></span>
+                    Falta seleccionar coordenadas
+                  </span>
+                </div>
+              }
             </div>
           </div>
           <div class="grid grid-cols-2 gap-3">

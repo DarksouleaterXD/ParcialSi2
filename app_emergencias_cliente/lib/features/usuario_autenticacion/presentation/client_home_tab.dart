@@ -14,12 +14,23 @@ class ClientHomeTab extends StatefulWidget {
     required this.onSessionExpired,
     required this.onOpenVehicles,
     required this.onAddVehicle,
+    this.onOpenIncidents,
+    this.onReportEmergency,
+    this.isTechnician = false,
   });
 
   final ProfileApi profileApi;
   final VoidCallback onSessionExpired;
   final VoidCallback onOpenVehicles;
   final VoidCallback onAddVehicle;
+
+  /// Abre la pestaña de actividad o de viajes asignados (técnico).
+  final VoidCallback? onOpenIncidents;
+
+  /// Abre el asistente de reporte (solo cliente).
+  final VoidCallback? onReportEmergency;
+
+  final bool isTechnician;
 
   @override
   State<ClientHomeTab> createState() => _ClientHomeTabState();
@@ -128,48 +139,101 @@ class _ClientHomeTabState extends State<ClientHomeTab> {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Desde acá podés gestionar tus vehículos y, más adelante, ver el estado de tus auxilios.',
+            widget.isTechnician
+                ? 'Desde Mis asignados ves los viajes que te asignaron o aceptaste y podés avanzar el estado del servicio.'
+                : 'Desde acá podés gestionar tus vehículos y revisar tus emergencias en Actividad.',
             style: AppTextStyles.bodyMedium(context),
           ),
           const SizedBox(height: AppSpacing.lg),
-          Card(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: widget.onOpenVehicles,
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Row(
-                  children: [
-                    Icon(Icons.directions_car_outlined, size: 32, color: scheme.primary),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Mis vehículos',
-                            style: AppTextStyles.subtitle(context).copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          const SizedBox(height: AppSpacing.xxs),
-                          Text(
-                            'Listado, alta, edición y baja de vehículos.',
-                            style: AppTextStyles.bodyMedium(context),
-                          ),
-                        ],
+          if (widget.onReportEmergency != null) ...[
+            PrimaryButton(
+              label: 'Reportar emergencia',
+              icon: Icons.emergency_outlined,
+              onPressed: widget.onReportEmergency,
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          if (widget.onOpenIncidents != null) ...[
+            Card(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: widget.onOpenIncidents,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.isTechnician ? Icons.assignment_turned_in_outlined : Icons.history_outlined,
+                        size: 32,
+                        color: scheme.primary,
                       ),
-                    ),
-                    Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
-                  ],
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.isTechnician ? 'Mis asignados' : 'Mis emergencias',
+                              style: AppTextStyles.subtitle(context).copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
+                              widget.isTechnician
+                                  ? 'Viajes asignados a vos y estado de cada uno.'
+                                  : 'Ver incidencias reportadas y su estado.',
+                              style: AppTextStyles.bodyMedium(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          PrimaryButton(
-            label: 'Agregar vehículo',
-            icon: Icons.add_rounded,
-            onPressed: widget.onAddVehicle,
-          ),
+            const SizedBox(height: AppSpacing.md),
+          ],
+          if (!widget.isTechnician) ...[
+            Card(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: widget.onOpenVehicles,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Row(
+                    children: [
+                      Icon(Icons.directions_car_outlined, size: 32, color: scheme.primary),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mis vehículos',
+                              style: AppTextStyles.subtitle(context).copyWith(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: AppSpacing.xxs),
+                            Text(
+                              'Listado, alta, edición y baja de vehículos.',
+                              style: AppTextStyles.bodyMedium(context),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: scheme.onSurfaceVariant),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            PrimaryButton(
+              label: 'Agregar vehículo',
+              icon: Icons.add_rounded,
+              onPressed: widget.onAddVehicle,
+            ),
+          ],
         ],
       ),
     );

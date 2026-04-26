@@ -1,0 +1,213 @@
+// Taller Inteligente — PostgreSQL (Taller_Inteligente.sql)
+// Importar en https://dbdiagram.io  (New diagram → Import → .dbml)
+// 19 tablas
+
+Project emergencias {
+  database_type: 'PostgreSQL'
+  Note: 'Plataforma de emergencias vehiculares'
+}
+
+Table Usuario {
+  id int [pk, increment, note: 'SERIAL']
+  nombre varchar(100) [not null]
+  apellido varchar(100) [not null]
+  email varchar(150) [not null, unique]
+  passwordHash varchar(255) [not null]
+  telefono varchar(20)
+  fotoPerfil varchar(255)
+  estado varchar(50) [default: 'Activo']
+  latitud decimal(10,8)
+  longitud decimal(11,8)
+  fechaRegistro timestamp [default: `CURRENT_TIMESTAMP`]
+  disponibilidad_servicio boolean [default: true, note: 'ALTER parche']
+}
+
+Table Rol {
+  id int [pk, increment]
+  nombre varchar(50) [not null, unique]
+  descripcion varchar(255)
+  permisos_json text
+}
+
+Table Usuario_Rol {
+  id_usuario int [not null, ref: > Usuario.id]
+  id_rol int [not null, ref: > Rol.id]
+
+  indexes {
+    (id_usuario, id_rol) [pk]
+  }
+}
+
+Table Vehiculo {
+  id int [pk, increment]
+  id_usuario int [not null, ref: > Usuario.id]
+  placa varchar(20) [not null, unique]
+  marca varchar(50) [not null]
+  modelo varchar(50) [not null]
+  anio int [not null]
+  color varchar(30)
+  tipoSeguro varchar(50)
+  fotoFrontal varchar(255)
+}
+
+Table Especialidad {
+  id int [pk, increment]
+  nombre varchar(100) [not null, unique]
+  descripcion text
+}
+
+Table Taller {
+  id int [pk, increment]
+  id_admin int [not null, ref: > Usuario.id]
+  nombre varchar(100) [not null]
+  direccion varchar(255) [not null]
+  latitud decimal(10,8)
+  longitud decimal(11,8)
+  telefono varchar(20)
+  email varchar(150)
+  horario_atencion varchar(120)
+  disponibilidad boolean [default: true]
+  capacidadMax int [not null]
+  calificacion decimal(3,2) [default: 0]
+}
+
+Table Taller_Especialidad {
+  id_taller int [not null, ref: > Taller.id]
+  id_especialidad int [not null, ref: > Especialidad.id]
+
+  indexes {
+    (id_taller, id_especialidad) [pk]
+  }
+}
+
+Table Mecanico_Taller {
+  id_usuario int [not null, ref: > Usuario.id]
+  id_taller int [not null, ref: > Taller.id]
+  especialidad varchar(30)
+
+  indexes {
+    (id_usuario, id_taller) [pk]
+  }
+}
+
+Table Incidente {
+  id int [pk, increment]
+  id_vehiculo int [not null, ref: > Vehiculo.id]
+  latitud decimal(10,8) [not null]
+  longitud decimal(11,8) [not null]
+  descripcion text [not null]
+  fechaCreacion timestamp [default: `CURRENT_TIMESTAMP`]
+  estado varchar(50) [default: 'Pendiente']
+  categoria_ia varchar(100)
+  prioridad_ia varchar(50)
+  resumen_ia text
+  confianza_ia decimal(5,2)
+  tecnico_id int [null, ref: > Usuario.id, note: 'ON DELETE SET NULL']
+}
+
+Table Notificacion {
+  id int [pk, increment]
+  id_usuario int [not null, ref: > Usuario.id]
+  titulo varchar(150) [not null]
+  mensaje text [not null]
+  tipo varchar(50)
+  leida boolean [default: false]
+  fechaHora timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table Bitacora {
+  id int [pk, increment]
+  id_usuario int [not null, ref: > Usuario.id]
+  modulo varchar(50) [not null]
+  accion varchar(100) [not null]
+  ipOrigen varchar(45)
+  resultado varchar(50)
+  fechaHora timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table Evidencia {
+  id int [pk, increment]
+  id_incidente int [not null, ref: > Incidente.id]
+  tipo varchar(50) [not null]
+  urlArchivo varchar(255) [not null]
+  textoExtraido_ia text
+  analisisDano_ia text
+  fechaSubida timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table idempotencia_registro {
+  id int [pk, increment]
+  alcance varchar(50) [not null]
+  clave varchar(128) [not null]
+  id_usuario int [not null, ref: > Usuario.id]
+  huella_carga varchar(64) [not null]
+  id_incidente_ref int [null, ref: > Incidente.id]
+  id_evidencia_ref int [null, ref: > Evidencia.id]
+  fechacreacion timestamp [default: `CURRENT_TIMESTAMP`]
+  expira_en timestamp [not null]
+
+  indexes {
+    (id_usuario, alcance, clave) [unique, name: 'uq_idempotencia_usuario_alcance_clave']
+  }
+}
+
+Table Taller_Candidato {
+  id int [pk, increment]
+  id_incidente int [not null, ref: > Incidente.id]
+  id_taller int [not null, ref: > Taller.id]
+  puntaje_ia decimal(5,2)
+  estado_sugerencia varchar(50) [default: 'Sugerido']
+  fechaSugerencia timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table Mensaje_Incidente {
+  id int [pk, increment]
+  id_incidente int [not null, ref: > Incidente.id]
+  id_remitente int [not null, ref: > Usuario.id]
+  mensaje text [not null]
+  fechaEnvio timestamp [default: `CURRENT_TIMESTAMP`]
+  leido boolean [default: false]
+}
+
+Table AsignacionServicio {
+  id int [pk, increment]
+  id_incidente int [not null, ref: > Incidente.id]
+  id_taller int [not null, ref: > Taller.id]
+  id_mecanico int [not null, ref: > Usuario.id]
+  costoEstimado decimal(10,2)
+  distanciaKm decimal(8,2)
+  tiempoLlegada int [note: 'minutos']
+  estado varchar(50) [default: 'Asignado']
+  fechaCreacion timestamp [default: `CURRENT_TIMESTAMP`]
+  fechaAceptacion timestamp
+  fechaFin timestamp
+  motivoRechazo text
+  trabajoRealizado text
+  costoFinal decimal(10,2)
+  obsMecanico text
+}
+
+Table Pago {
+  id int [pk, increment]
+  id_asignacion int [not null, unique, ref: - AsignacionServicio.id, note: '1:1 UNIQUE']
+  montoTotal decimal(10,2) [not null]
+  comisionPlataforma decimal(10,2) [not null]
+  montoTaller decimal(10,2) [not null]
+  estado varchar(50) [default: 'Pendiente']
+  metodoPago varchar(50)
+  idTransExterna varchar(150)
+  fechaPago timestamp
+}
+
+Table Calificacion {
+  id int [pk, increment]
+  id_asignacion int [not null, unique, ref: - AsignacionServicio.id, note: '1:1 UNIQUE, CHECK 1-5']
+  puntuacion int [not null, check: `puntuacion between 1 and 5`]
+  comentario text
+  fecha timestamp [default: `CURRENT_TIMESTAMP`]
+}
+
+Table TokenRevocado {
+  jti varchar(64) [pk]
+  expiracion timestamp [not null]
+}

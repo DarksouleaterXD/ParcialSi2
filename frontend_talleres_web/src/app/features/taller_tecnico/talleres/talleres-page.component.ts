@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import * as L from 'leaflet';
 import {
   TallerListItem,
   TalleresApiService,
@@ -32,8 +33,20 @@ export class TalleresPageComponent implements OnInit {
   createSubmitting = false;
   editSubmitting = false;
   estadoSubmittingId: number | null = null;
+  geolocatingCreate = false;
+  geolocatingEdit = false;
 
   private editId: number | null = null;
+  private createMap: L.Map | null = null;
+  private createMarker: L.Marker | null = null;
+  private editMap: L.Map | null = null;
+  private editMarker: L.Marker | null = null;
+  private readonly markerIcon = L.divIcon({
+    className: '',
+    html: '<div style="width:16px;height:16px;border-radius:999px;background:#f97316;border:2px solid #fff;box-shadow:0 0 0 2px rgba(249,115,22,.3);"></div>',
+    iconSize: [16, 16],
+    iconAnchor: [8, 8],
+  });
 
   filterForm = this.fb.nonNullable.group({
     q: [''],
@@ -130,10 +143,12 @@ export class TalleresPageComponent implements OnInit {
       horario_atencion: '',
     });
     this.createOpen.set(true);
+    this.scheduleCreateMapInit();
   }
 
   closeCreateModal(): void {
     this.createModalError = '';
+    this.destroyCreateMap();
     this.createOpen.set(false);
   }
 
@@ -152,12 +167,213 @@ export class TalleresPageComponent implements OnInit {
       horario_atencion: t.horario_atencion ?? '',
     });
     this.editOpen.set(true);
+    this.scheduleEditMapInit();
+  }
+
+  private scheduleCreateMapInit(): void {
+    // El modal usa render condicional; esperamos a que el host tenga tamaño real.
+    const run = () => {
+      const host = document.getElementById('create-map');
+      if (!host || host.clientWidth < 20 || host.clientHeight < 20) {
+        window.setTimeout(run, 50);
+        return;
+      }
+      this.initCreateMapFromForm();
+      window.setTimeout(() => this.createMap?.invalidateSize(), 80);
+    };
+    window.setTimeout(run, 0);
+  }
+
+  private scheduleEditMapInit(): void {
+    const run = () => {
+      const host = document.getElementById('edit-map');
+      if (!host || host.clientWidth < 20 || host.clientHeight < 20) {
+        window.setTimeout(run, 50);
+        return;
+      }
+      this.initEditMapFromForm();
+      window.setTimeout(() => this.editMap?.invalidateSize(), 80);
+    };
+    window.setTimeout(run, 0);
   }
 
   closeEditModal(): void {
     this.editModalError = '';
+    this.destroyEditMap();
     this.editOpen.set(false);
     this.editId = null;
+  }
+
+  private initCreateMapFromForm(): void {
+    const host = document.getElementById('create-map');
+    if (!host || this.createMap) {
+      return;
+    }
+    const lat = Number(this.createForm.controls.latitud.value);
+    const lon = Number(this.createForm.controls.longitud.value);
+    const center: L.LatLngTuple =
+      Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : [-17.7833, -63.1821];
+    this.createMap = L.map(host, { center, zoom: 13, zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(this.createMap);
+    this.createMarker = L.marker(center, { draggable: true, icon: this.markerIcon }).addTo(this.createMap);
+    this.createMarker.on('dragend', () => {
+      const p = this.createMarker?.getLatLng();
+      if (p) {
+        this.patchCreateCoords(p.lat, p.lng);
+      }
+    });
+    this.createMap.on('click', (ev: L.LeafletMouseEvent) => {
+      this.createMarker?.setLatLng(ev.latlng);
+      this.patchCreateCoords(ev.latlng.lat, ev.latlng.lng);
+    });
+    this.createMap.invalidateSize();
+  }
+
+  private initEditMapFromForm(): void {
+    const host = document.getElementById('edit-map');
+    if (!host || this.editMap) {
+      return;
+    }
+    const lat = Number(this.editForm.controls.latitud.value);
+    const lon = Number(this.editForm.controls.longitud.value);
+    const center: L.LatLngTuple =
+      Number.isFinite(lat) && Number.isFinite(lon) ? [lat, lon] : [-17.7833, -63.1821];
+    this.editMap = L.map(host, { center, zoom: 13, zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors',
+    }).addTo(this.editMap);
+    this.editMarker = L.marker(center, { draggable: true, icon: this.markerIcon }).addTo(this.editMap);
+    this.editMarker.on('dragend', () => {
+      const p = this.editMarker?.getLatLng();
+      if (p) {
+        this.patchEditCoords(p.lat, p.lng);
+      }
+    });
+    this.editMap.on('click', (ev: L.LeafletMouseEvent) => {
+      this.editMarker?.setLatLng(ev.latlng);
+      this.patchEditCoords(ev.latlng.lat, ev.latlng.lng);
+    });
+    this.editMap.invalidateSize();
+  }
+
+  private destroyCreateMap(): void {
+    this.createMap?.remove();
+    this.createMap = null;
+    this.createMarker = null;
+  }
+
+  private destroyEditMap(): void {
+    this.editMap?.remove();
+    this.editMap = null;
+    this.editMarker = null;
+  }
+
+  private patchCreateCoords(lat: number, lon: number): void {
+    this.createForm.patchValue(
+      { latitud: lat.toFixed(6), longitud: lon.toFixed(6) },
+      { emitEvent: false },
+    );
+  }
+
+  private patchEditCoords(lat: number, lon: number): void {
+    this.editForm.patchValue(
+      { latitud: lat.toFixed(6), longitud: lon.toFixed(6) },
+      { emitEvent: false },
+    );
+  }
+
+  useCurrentLocationCreate(): void {
+    if (!navigator.geolocation || this.geolocatingCreate) {
+      return;
+    }
+    this.geolocatingCreate = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        this.patchCreateCoords(latitude, longitude);
+        this.createMarker?.setLatLng([latitude, longitude]);
+        this.createMap?.setView([latitude, longitude], 15);
+        this.geolocatingCreate = false;
+      },
+      () => {
+        this.createModalError = 'No se pudo obtener tu ubicación actual.';
+        this.geolocatingCreate = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  centerCreateMapOnCurrentLocation(): void {
+    if (!navigator.geolocation || this.geolocatingCreate) {
+      return;
+    }
+    this.geolocatingCreate = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.createMap?.setView([pos.coords.latitude, pos.coords.longitude], 15);
+        this.geolocatingCreate = false;
+      },
+      () => {
+        this.createModalError = 'No se pudo centrar el mapa con tu ubicación.';
+        this.geolocatingCreate = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  useCurrentLocationEdit(): void {
+    if (!navigator.geolocation || this.geolocatingEdit) {
+      return;
+    }
+    this.geolocatingEdit = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        this.patchEditCoords(latitude, longitude);
+        this.editMarker?.setLatLng([latitude, longitude]);
+        this.editMap?.setView([latitude, longitude], 15);
+        this.geolocatingEdit = false;
+      },
+      () => {
+        this.editModalError = 'No se pudo obtener tu ubicación actual.';
+        this.geolocatingEdit = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  centerEditMapOnCurrentLocation(): void {
+    if (!navigator.geolocation || this.geolocatingEdit) {
+      return;
+    }
+    this.geolocatingEdit = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        this.editMap?.setView([pos.coords.latitude, pos.coords.longitude], 15);
+        this.geolocatingEdit = false;
+      },
+      () => {
+        this.editModalError = 'No se pudo centrar el mapa con tu ubicación.';
+        this.geolocatingEdit = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  }
+
+  hasCreateCoords(): boolean {
+    const lat = Number(this.createForm.controls.latitud.value);
+    const lon = Number(this.createForm.controls.longitud.value);
+    return Number.isFinite(lat) && Number.isFinite(lon);
+  }
+
+  hasEditCoords(): boolean {
+    const lat = Number(this.editForm.controls.latitud.value);
+    const lon = Number(this.editForm.controls.longitud.value);
+    return Number.isFinite(lat) && Number.isFinite(lon);
   }
 
   private buildCreateBody() {
@@ -198,7 +414,7 @@ export class TalleresPageComponent implements OnInit {
     this.api.create(body).subscribe({
       next: () => {
         this.createSubmitting = false;
-        this.createOpen.set(false);
+        this.closeCreateModal();
         this.successMessage = 'Taller registrado correctamente.';
         this.loadTalleres();
       },

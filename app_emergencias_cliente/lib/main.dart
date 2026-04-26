@@ -1,4 +1,7 @@
+import 'package:app_emergencias_cliente/features/incidentes_servicios/offline/pending_incidents_store.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/auth_api.dart';
 import 'core/auth_storage.dart';
@@ -9,8 +12,11 @@ import 'core/widgets/primary_button.dart';
 import 'features/usuario_autenticacion/presentation/client_shell_screen.dart';
 import 'features/usuario_autenticacion/presentation/login_screen.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  Stripe.publishableKey = const String.fromEnvironment('STRIPE_PUB_KEY', defaultValue: '');
+  await Hive.initFlutter();
+  await Hive.openBox<String>(kPendingIncidentsHiveBox);
   runApp(const EmergenciasApp());
 }
 

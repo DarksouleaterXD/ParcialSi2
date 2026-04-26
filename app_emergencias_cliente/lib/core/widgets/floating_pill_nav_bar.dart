@@ -3,19 +3,25 @@ import 'package:flutter/material.dart';
 import '../theme/app_radius.dart';
 import '../theme/app_spacing.dart';
 
-/// Floating pill navigation: Inicio, Vehículos, FAB (add vehicle), Actividad, Perfil.
+/// Floating pill navigation: Inicio, Vehículos, FAB contextual, Actividad, Perfil.
 class FloatingPillNavBar extends StatelessWidget {
   const FloatingPillNavBar({
     super.key,
     required this.selectedSlot,
     required this.onSlotTap,
     required this.onCenterTap,
+    required this.onCenterLongPress,
+    required this.centerTooltip,
+    this.activityNavLabel = 'Actividad',
   });
 
   /// `0` Inicio, `1` Vehículos, `3` Actividad, `4` Perfil (FAB is visual center, not a slot).
   final int selectedSlot;
   final ValueChanged<int> onSlotTap;
   final VoidCallback onCenterTap;
+  final VoidCallback onCenterLongPress;
+  final String centerTooltip;
+  final String activityNavLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +57,23 @@ class FloatingPillNavBar extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxs),
-              child: _CenterFab(onTap: onCenterTap),
+              child: TweenAnimationBuilder<double>(
+                key: ValueKey<int>(selectedSlot),
+                tween: Tween(begin: 0.9, end: 1.0),
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+                child: _CenterFab(
+                  tooltip: centerTooltip,
+                  onTap: onCenterTap,
+                  onLongPress: onCenterLongPress,
+                ),
+              ),
             ),
             Expanded(
               child: _NavSlot(
                 icon: selectedSlot == 3 ? Icons.history_rounded : Icons.history_outlined,
-                label: 'Actividad',
+                label: activityNavLabel,
                 selected: selectedSlot == 3,
                 onTap: () => onSlotTap(3),
               ),
@@ -136,9 +153,15 @@ class _NavSlot extends StatelessWidget {
 }
 
 class _CenterFab extends StatelessWidget {
-  const _CenterFab({required this.onTap});
+  const _CenterFab({
+    required this.tooltip,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
+  final String tooltip;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -146,7 +169,7 @@ class _CenterFab extends StatelessWidget {
     final c = scheme.primary;
 
     return Tooltip(
-      message: 'Agregar vehículo',
+      message: tooltip,
       child: Material(
         elevation: 8,
         shadowColor: c.withValues(alpha: 0.35),
@@ -155,6 +178,7 @@ class _CenterFab extends StatelessWidget {
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
+          onLongPress: onLongPress,
           child: SizedBox(
             width: 54,
             height: 54,

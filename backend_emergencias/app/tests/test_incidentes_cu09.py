@@ -1,5 +1,6 @@
 """CU-09: crear incidente, evidencias y bitácora."""
 
+import uuid
 from pathlib import Path
 
 import pytest
@@ -22,8 +23,10 @@ def _login(client, email: str = "cliente-test@example.com", password: str = "cla
     return res.json()["access_token"]
 
 
-def _hdr(token: str) -> dict[str, str]:
-    return {"Authorization": f"Bearer {token}"}
+def _hdr(token: str, *, idempotency_key: str | None = None) -> dict[str, str]:
+    h: dict[str, str] = {"Authorization": f"Bearer {token}"}
+    h["Idempotency-Key"] = idempotency_key or f"idem-{uuid.uuid4().hex}"
+    return h
 
 
 def _vehiculo_id_for_cliente() -> int:
@@ -92,7 +95,7 @@ def test_create_incident_happy_201(client):
     body = res.json()
     assert body["vehiculo_id"] == vid
     assert body["cliente_id"] == 2
-    assert body["estado"] == "Pendiente"
+    assert body["estado"] in ("Pendiente", "Pendiente IA")
     assert body["evidencias_count"] == 0
     assert body["descripcion_texto"] == "Pinchazo en autopista"
     assert _count_bitacora(accion=AUDIT_ACTION_INCIDENTE_CREATE) == before + 1
@@ -175,7 +178,7 @@ def test_add_evidence_incident_not_found_404(client):
     assert res.status_code == 404
 
 
-def test_create_incident_409_when_vehicle_has_active(client):
+def test_create_incident_allows_multiple_for_same_vehicle(client):
     token = _login(client)
     engine = app.state.test_engine
     Session = sessionmaker(bind=engine)
@@ -207,8 +210,8 @@ def test_create_incident_409_when_vehicle_has_active(client):
         json={"vehiculo_id": vid, "latitud": -31.1, "longitud": -60.1},
         headers=_hdr(token),
     )
-    assert res2.status_code == 409
-    assert "activo" in res2.json()["detail"].lower()
+    assert res2.status_code == 201
+    assert res2.json()["vehiculo_id"] == vid
 
 
 def test_get_incident_detail_includes_evidencias(client):

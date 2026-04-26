@@ -1,5 +1,19 @@
 /** Módulos de dominio — definición de la navegación lateral. */
-export type ShellNavIcon = 'home' | 'users' | 'roles' | 'car' | 'wrench' | 'alert' | 'card' | 'cpu' | 'list';
+export type ShellNavIcon =
+  | 'home'
+  | 'users'
+  | 'roles'
+  | 'car'
+  | 'wrench'
+  | 'alert'
+  | 'card'
+  | 'banknotes'
+  | 'cpu'
+  | 'list'
+  /** Triángulo de alerta (genérico). */
+  | 'triangleAlert'
+  /** Rayo — cola de solicitudes / incidentes (no Bitácora). */
+  | 'bolt';
 
 export interface ShellNavItem {
   /** Comandos absolutos para `RouterLink` (evita ambigüedad con rutas hijas). */
@@ -9,6 +23,8 @@ export interface ShellNavItem {
   adminLabel?: string;
   adminOnly?: boolean;
   icon: ShellNavIcon;
+  /** Por defecto `exact: true`; usar `false` si el ítem debe activarse con rutas hijas (ej. detalle). */
+  routerLinkActiveOptions?: { exact: boolean };
 }
 
 export interface ShellNavModule {
@@ -47,17 +63,20 @@ export const SHELL_NAV_MODULES: ShellNavModule[] = [
     packageId: 'incidentes_servicios',
     title: 'Incidentes y servicios',
     packageIcon: 'alert',
-    items: [],
-    comingSoon: true,
-    soonIcon: 'alert',
+    items: [
+      {
+        routerLink: ['/', 'incidentes', 'solicitudes'],
+        label: 'Solicitudes',
+        icon: 'bolt',
+        routerLinkActiveOptions: { exact: false },
+      },
+    ],
   },
   {
     packageId: 'pagos',
     title: 'Pagos',
-    packageIcon: 'card',
-    items: [],
-    comingSoon: true,
-    soonIcon: 'card',
+    packageIcon: 'banknotes',
+    items: [{ routerLink: ['/', 'pagos'], label: 'Pagos y comisiones', icon: 'banknotes' }],
   },
   {
     packageId: 'sistema',

@@ -1,0 +1,441 @@
+<mxfile host="app.diagrams.net" modified="2026-04-24T00:00:00.000Z" agent="Cursor" version="21.0.0" type="device">
+  <diagram id="erd-taller" name="ER - Taller Inteligente">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="2000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="h1" value="&lt;b&gt;1 — Tablas independientes (sin FK entrantes)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="500" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Usuario" value="&lt;b&gt;Usuario&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / nombre, apellido, email, passwordHash, tel, foto, estado, disponibilidad, lat, lon, fechaRegistro&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="50" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Rol" value="&lt;b&gt;Rol&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / nombre, descripcion, permisos_json&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="50" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Especialidad" value="&lt;b&gt;Especialidad&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / nombre, descripcion (catálogo)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="550" y="50" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_TokenRevocado" value="&lt;b&gt;TokenRevocado&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: jti / expiracion (sin FK)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="780" y="50" width="200" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="h2" value="&lt;b&gt;2 — Nivel 1: roles de usuario, vehículo, taller (admin = Usuario)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="40" y="200" width="800" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Usuario_Rol" value="&lt;b&gt;Usuario_Rol&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK (id_usuario, id_rol) / FK: Usuario, Rol&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="230" width="200" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Vehiculo" value="&lt;b&gt;Vehiculo&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_usuario / placa, marca, modelo, anio, color, tipoSeguro, fotoFrontal&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="280" y="220" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Taller" value="&lt;b&gt;Taller&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_admin (Usuario) / nombre, dir, lat, lon, contacto, horario, cap., calif.&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="560" y="210" width="300" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Notificacion" value="&lt;b&gt;Notificacion&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_usuario / titulo, mensaje, tipo, leida, fechaHora&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="210" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Bitacora" value="&lt;b&gt;Bitacora&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_usuario / modulo, accion, ip, resultado, fechaHora&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="900" y="330" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="h3" value="&lt;b&gt;3 — Taller: especialidad y mecánico; incidente, notificaciones ya arriba&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="40" y="400" width="800" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Taller_Esp" value="&lt;b&gt;Taller_Especialidad&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK (id_taller, id_especialidad) / FK: Taller, Especialidad&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="430" width="260" height="80" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_MecTaller" value="&lt;b&gt;Mecanico_Taller&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK (id_usuario, id_taller) / FK: Usuario, Taller / especialidad (texto)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="330" y="420" width="300" height="90" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Incidente" value="&lt;b&gt;Incidente&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_vehiculo, tecnico_id? (Usuario) / lat, lon, desc., estado, campos IA, fechas&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="660" y="410" width="380" height="110" as="geometry" />
+        </mxCell>
+
+        <mxCell id="h4" value="&lt;b&gt;4 — A partir del incidente: evidencia, sugerencia IA, chat, idempotencia&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="40" y="560" width="900" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Evidencia" value="&lt;b&gt;Evidencia&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_incidente / tipo, url, textos IA, fechaSubida&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="590" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_TallCand" value="&lt;b&gt;Taller_Candidato&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_incidente, id_taller / puntaje_ia, estado, fechaSugerencia&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="590" width="300" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Mensaje" value="&lt;b&gt;Mensaje_Incidente&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_incidente, id_remitente (Usuario) / mensaje, fecha, leido&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="590" width="300" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Idem" value="&lt;b&gt;idempotencia_registro&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / UQ (id_usuario,alcance,clave) / FK: Usuario, id_incidente_ref?, id_evidencia_ref? / resto&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="720" width="500" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="h5" value="&lt;b&gt;5 — Asignación de servicio, pago y calificación (1:1 vía id_asignacion UNIQUE)&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=11;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="40" y="860" width="800" height="20" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Asignacion" value="&lt;b&gt;AsignacionServicio&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK: id_incidente, id_taller, id_mecanico(Usuario) / costos, distancias, estado, fechas, notas mecánico, …&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="200" y="900" width="500" height="120" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Pago" value="&lt;b&gt;Pago&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK id_asignacion UNIQUE/ montos, estado, metodo, id trans., fechaPago&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="150" y="1100" width="280" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="T_Calif" value="&lt;b&gt;Calificacion&lt;/b&gt;&lt;hr size=&quot;1&quot; style=&quot;opacity:0.25&quot;&gt;&lt;div align=&quot;left&quot; style=&quot;font-size:10px;line-height:1.35;&quot;&gt;PK: id / FK id_asignacion UNIQUE / puntuación 1–5, comentario, fecha&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;align=center;verticalAlign=top;spacing=8;fillColor=#ffffff;strokeColor=#94a3b8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="500" y="1100" width="280" height="100" as="geometry" />
+        </mxCell>
+
+        <mxCell id="foot" value="Cardinalidad en aristas. Línea discontinua: FK opcional (tecnico en Incidente, refs en idempotencia). Sin funciones almacenadas en el gráfico." style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;fontColor=#94a3b8;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1940" width="900" height="40" as="geometry" />
+        </mxCell>
+
+        <!-- relaciones: ortogonal, sin cajas contenedoras; cardinalidad 1 y N/0..N/1:1 -->
+        <mxCell id="E_ur_u" value="" style="endArrow=ERmany;startArrow=ERone;html=1;rounded=0;endFill=0;startFill=0;strokeColor=#475569;entryX=0.5;entryY=0;exitX=0.15;exitY=1;exitDx=0;exitDy=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Usuario_Rol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_ur_u1" value="1" style="edgeLabel;html=1;align=center;resizable=0;fontSize=9;fontColor=#334155;" vertex="1" connectable="0" parent="E_ur_u">
+          <mxGeometry x="-0.2" y="1" relative="1" as="geometry">
+            <mxPoint x="8" y="-6" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_ur_u2" value="N" style="edgeLabel;html=1;align=center;resizable=0;fontSize=9;fontColor=#334155;" vertex="1" connectable="0" parent="E_ur_u">
+          <mxGeometry x="0.2" y="-1" relative="1" as="geometry">
+            <mxPoint y="6" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_ur_r" value="" style="endArrow=ERmany;startArrow=ERone;html=1;rounded=0;endFill=0;startFill=0;strokeColor=#475569;entryX=0.75;entryY=0;exitX=0.5;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Rol" target="T_Usuario_Rol">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_ur_r1" value="1" style="edgeLabel;html=1;align=center;resizable=0;fontSize=9;fontColor=#334155;" vertex="1" connectable="0" parent="E_ur_r">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint x="8" y="-4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_ur_r2" value="N" style="edgeLabel;html=1;align=center;resizable=0;fontSize=9;fontColor=#334155;" vertex="1" connectable="0" parent="E_ur_r">
+          <mxGeometry x="0.2" y="-1" relative="1" as="geometry">
+            <mxPoint y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_veh" value="" style="endArrow=ERmany;startArrow=ERone;html=1;rounded=0;endFill=0;startFill=0;strokeColor=#475569;entryX=0.5;entryY=0;exitX=0.45;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Vehiculo">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_veh1" value="1" style="edgeLabel;html=1;align=center;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_veh">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_veh2" value="0..N" style="edgeLabel;html=1;align=center;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_veh">
+          <mxGeometry x="0.4" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_taller_admin" value="" style="endArrow=ERmany;startArrow=ERone;html=1;rounded=0;endFill=0;startFill=0;strokeColor=#475569;entryX=0;entryY=0.35;exitX=0.9;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Taller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_ta1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_taller_admin">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint x="6" y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_ta2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_taller_admin">
+          <mxGeometry x="0.85" y="1" relative="1" as="geometry">
+            <mxPoint x="4" y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_not" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.5;entryY=0;exitX=0.8;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Notificacion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_n1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_not">
+          <mxGeometry x="0.2" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_n2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_not">
+          <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_bit" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.2;entryY=0;exitX=0.7;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Bitacora">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_b1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_bit">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint x="4" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_b2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_bit">
+          <mxGeometry x="0.1" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_tesp_t" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.2;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Taller" target="T_Taller_Esp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_tsp1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tesp_t">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_tsp2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tesp_t">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_tesp_e" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.9;entryY=0;exitX=0.2;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Especialidad" target="T_Taller_Esp">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_tse1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tesp_e">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_tse2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tesp_e">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_mec_u" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.5;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_MecTaller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_mecu1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_mec_u">
+          <mxGeometry x="-0.1" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_mecu2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_mec_u">
+          <mxGeometry x="0.3" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_mec_tal" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.9;entryY=0;exitX=0.2;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Taller" target="T_MecTaller">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_mect1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_mec_tal">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_mect2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_mec_tal">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_inc_veh" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.12;entryY=0;exitX=0.5;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Vehiculo" target="T_Incidente">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_iv1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_inc_veh">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_iv2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_inc_veh">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_inc_tec" value="tecnico (opcional)" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#94a3b8;dashed=1;entryX=0.02;entryY=0.3;exitX=0.05;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Incidente">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_it1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_inc_tec">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_it2" value="0..1 en Incidente" style="edgeLabel;html=1;resizable=0;fontSize=8;" vertex="1" connectable="0" parent="E_inc_tec">
+          <mxGeometry x="0.75" y="1" relative="1" as="geometry">
+            <mxPoint x="8" y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_evi" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.2;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Incidente" target="T_Evidencia">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_e1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_evi">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_e2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_evi">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_tcand_i" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.5;entryY=0;exitX=0.3;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Incidente" target="T_TallCand">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_tci1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tcand_i">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_tci2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tcand_i">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_tcand_t" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.1;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Taller" target="T_TallCand">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_tct1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tcand_t">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_tct2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_tcand_t">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_msg_i" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.1;entryY=0;exitX=0.5;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Incidente" target="T_Mensaje">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_mgi1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_msg_i">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_mgi2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_msg_i">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_msg_u" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0;entryY=0.45;exitX=0.85;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Mensaje">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_mgu1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_msg_u">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_mgu2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_msg_u">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_idem_u" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.45;entryY=0;exitX=0.2;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Idem">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_idu1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_idem_u">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_idu2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_idem_u">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_idem_i" value="" style="endArrow=ERone;endFill=0;startArrow=ERone;startFill=0;html=1;dashed=1;strokeColor=#94a3b8;entryX=0.1;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Incidente" target="T_Idem">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E_idem_e" value="" style="endArrow=ERone;endFill=0;startArrow=ERone;startFill=0;html=1;dashed=1;strokeColor=#94a3b8;entryX=0.04;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Evidencia" target="T_Idem">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <mxCell id="E_asig" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.2;entryY=0;exitX=0.2;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Incidente" target="T_Asignacion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_a1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_asig">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_a2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_asig">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_asig_t" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.1;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Taller" target="T_Asignacion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_ast1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_asig_t">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_ast2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_asig_t">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_asig_m" value="" style="endArrow=ERmany;startArrow=ERone;html=1;endFill=0;startFill=0;strokeColor=#475569;entryX=0.1;entryY=0.15;exitX=0.02;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Usuario" target="T_Asignacion">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_asm1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_asig_m">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_asm2" value="0..N" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_asig_m">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_pago" value="" style="endArrow=ERone;endFill=0;startArrow=ERone;startFill=0;html=1;strokeColor=#0f172a;entryX=0.2;entryY=0;exitX=0.1;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Asignacion" target="T_Pago">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_p1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_pago">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_p2" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_pago">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="E_cal" value="" style="endArrow=ERone;endFill=0;startArrow=ERone;startFill=0;html=1;strokeColor=#0f172a;entryX=0.5;entryY=0;exitX=0.4;exitY=1;edgeStyle=orthogonalEdgeStyle;orthogonal=1;jettySize=auto;orthogonalLoop=1;" edge="1" parent="1" source="T_Asignacion" target="T_Calif">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="E_c1" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_cal">
+          <mxGeometry x="0" y="1" relative="1" as="geometry">
+            <mxPoint y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="E_c2" value="1" style="edgeLabel;html=1;resizable=0;fontSize=9;" vertex="1" connectable="0" parent="E_cal">
+          <mxGeometry x="0" y="-1" relative="1" as="geometry">
+            <mxPoint y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

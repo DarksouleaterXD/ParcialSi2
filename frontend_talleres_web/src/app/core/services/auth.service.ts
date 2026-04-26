@@ -207,11 +207,22 @@ export class AuthService {
     );
   }
 
+  /**
+   * Limpia token local y perfil (p. ej. tras 401 del API sin pasar por logout HTTP).
+   * La navegación a login la hace quien llama si corresponde.
+   */
+  clearSessionLocal(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('roles');
+    this.profile.set(null);
+  }
+
   isLoggedIn(): boolean {
     return !!localStorage.getItem('access_token');
   }
 
-  isAdmin(): boolean {
+  /** Roles efectivos (localStorage o payload JWT). */
+  currentRoles(): string[] {
     let roles: string[] = [];
     try {
       const raw = localStorage.getItem('roles');
@@ -222,6 +233,28 @@ export class AuthService {
     if (!roles.length) {
       roles = this.rolesFromAccessToken();
     }
-    return roles.includes('Administrador');
+    return roles;
+  }
+
+  isAdmin(): boolean {
+    return this.currentRoles().includes('Administrador');
+  }
+
+  isTecnico(): boolean {
+    return this.currentRoles().includes('Tecnico');
+  }
+
+  /**
+   * CU10: listado/detalle de solicitudes y aceptación (admin asigna técnico; técnico toma de la bolsa).
+   */
+  canManageIncidentesCu10(): boolean {
+    return this.isAdmin() || this.isTecnico();
+  }
+
+  /**
+   * @deprecated Preferir `canManageIncidentesCu10()`.
+   */
+  canManageTallerSolicitudes(): boolean {
+    return this.canManageIncidentesCu10();
   }
 }

@@ -1,0 +1,520 @@
+<div class="mx-auto max-w-4xl space-y-6 px-4 py-6 sm:px-0">
+  <div class="flex flex-wrap items-center justify-between gap-3">
+    <div>
+      <a
+        routerLink="/incidentes/solicitudes"
+        class="rounded text-sm font-medium text-orange-600 transition hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2"
+      >
+        ← Volver a solicitudes
+      </a>
+      <h1 class="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+        Incidente
+        @if (incidenteId(); as iid) {
+          <span class="text-slate-500">#{{ iid }}</span>
+        }
+      </h1>
+    </div>
+    <button
+      type="button"
+      (click)="retry()"
+      [disabled]="loading() || incidenteId() == null"
+      class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
+    >
+      Reintentar
+    </button>
+  </div>
+
+  @if (toastMessage()) {
+    <div
+      [class]="
+        toastKind() === 'success'
+          ? 'rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 shadow-sm'
+          : 'rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-900 shadow-sm'
+      "
+      [attr.role]="toastKind() === 'success' ? 'status' : 'alert'"
+    >
+      {{ toastMessage() }}
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="flex justify-center rounded-2xl border border-slate-200 bg-white py-20 shadow-sm">
+      <div class="h-9 w-9 animate-spin rounded-full border-2 border-orange-500 border-t-transparent" aria-label="Cargando"></div>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="rounded-2xl border border-red-200 bg-red-50/90 p-6 shadow-sm">
+      <p class="font-medium text-red-800">{{ errorMessage() }}</p>
+      @if (errorMessage().includes('permiso') || errorMessage().toLowerCase().includes('autorizado')) {
+        <p class="mt-2 text-sm text-red-700/90">Solo administrador o el cliente dueño pueden ver este incidente.</p>
+      }
+    </div>
+  } @else if (detail()) {
+    @let d = detail()!;
+    <div class="space-y-6">
+      <div class="grid gap-4 sm:grid-cols-2">
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Identificación</h2>
+          <dl class="mt-3 space-y-2 text-sm">
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">ID</dt>
+              <dd class="font-medium text-slate-900">{{ d.id }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Cliente</dt>
+              <dd class="font-medium text-slate-900">Usuario #{{ d.cliente_id }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Vehículo</dt>
+              <dd class="font-medium text-slate-900">#{{ d.vehiculo_id }}</dd>
+            </div>
+            <div class="flex justify-between gap-4">
+              <dt class="text-slate-500">Estado</dt>
+              <dd>
+                <span
+                  [class]="
+                    'inline-flex rounded-full border px-2.5 py-0.5 text-xs font-semibold ' + estadoBadgeClass(d.estado)
+                  "
+                  >{{ d.estado }}</span
+                >
+              </dd>
+            </div>
+            @if (d.created_at) {
+              <div class="flex justify-between gap-4">
+                <dt class="text-slate-500">Alta</dt>
+                <dd class="text-slate-800">{{ d.created_at | date: 'medium' }}</dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Ubicación</h2>
+          <p class="mt-3 font-mono text-sm text-slate-800">{{ d.latitud | number: '1.5-5' }}, {{ d.longitud | number: '1.5-5' }}</p>
+          <a
+            [href]="mapsUrl(d.latitud, d.longitud)"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-3 inline-flex rounded text-sm font-medium text-orange-600 transition hover:text-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500"
+          >
+            Abrir en mapa
+          </a>
+        </section>
+      </div>
+
+      <section class="rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50/90 to-white p-5 shadow-sm">
+        <div class="flex items-center gap-2">
+          <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/15 text-orange-600" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.455 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.455 2.456Z"
+              />
+            </svg>
+          </span>
+          <h2 class="text-sm font-semibold tracking-tight text-slate-900">Análisis automático (IA)</h2>
+        </div>
+        <dl class="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <div class="rounded-xl border border-slate-100 bg-white/80 p-3">
+            <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Categoría</dt>
+            <dd class="mt-1 font-semibold text-slate-900">{{ d.categoria_ia || '—' }}</dd>
+          </div>
+          <div class="rounded-xl border border-slate-100 bg-white/80 p-3">
+            <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Prioridad</dt>
+            <dd class="mt-1">
+              @if (d.prioridad_ia) {
+                <span
+                  [class]="'inline-flex rounded-full border px-2.5 py-0.5 text-xs font-bold ' + prioridadBadgeClass(d.prioridad_ia)"
+                  >{{ d.prioridad_ia }}</span
+                >
+              } @else {
+                <span class="text-slate-500">—</span>
+              }
+            </dd>
+          </div>
+        </dl>
+        <div class="mt-4 rounded-xl border border-slate-100 bg-white/90 p-4">
+          <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Resumen</dt>
+          <dd class="mt-2 text-sm leading-relaxed text-slate-800">{{ d.resumen_ia || 'Sin análisis disponible aún.' }}</dd>
+        </div>
+        @if (d.confianza_ia != null) {
+          <p class="mt-3 text-xs text-slate-500">Confianza estimada: <span class="font-medium text-slate-700">{{ d.confianza_ia | number: '1.0-2' }}</span></p>
+        }
+        @if (d.ai_status) {
+          <p class="mt-2 text-xs text-slate-500">
+            Pipeline IA: <span class="font-mono font-medium text-slate-700">{{ d.ai_status }}</span>
+            @if (d.ai_provider) {
+              <span class="text-slate-400"> · {{ d.ai_provider }}</span>
+            }
+            @if (d.ai_model) {
+              <span class="text-slate-400"> / {{ d.ai_model }}</span>
+            }
+            @if (d.prompt_version) {
+              <span class="text-slate-400"> · prompt {{ d.prompt_version }}</span>
+            }
+          </p>
+        }
+        @if (showManualReviewBanner()) {
+          <p
+            class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-950"
+            role="status"
+          >
+            En revisión manual: la confianza del análisis automático fue baja. Un operador debe validar antes de asignar.
+          </p>
+        }
+        @if (showIaStructured() && d.ai_result) {
+          @let ar = d.ai_result;
+          <div class="mt-4 space-y-3 rounded-xl border border-slate-100 bg-white/90 p-4 text-sm text-slate-800">
+            @if (ar.transcripcion) {
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Transcripción (audio)</p>
+                <p class="mt-1 leading-relaxed">{{ ar.transcripcion }}</p>
+              </div>
+            }
+            @if (ar.danos_identificados?.length) {
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Daños en imagen</p>
+                <ul class="mt-1 list-inside list-disc text-slate-700">
+                  @for (x of ar.danos_identificados; track x) {
+                    <li>{{ x }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            @if (ar.categoria_incidente) {
+              <p class="text-xs text-slate-500">
+                Categoría (modelo): <span class="font-medium text-slate-800">{{ ar.categoria_incidente }}</span>
+              </p>
+            }
+            @if (ar.resumen_automatico && ar.resumen_automatico !== d.resumen_ia) {
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Resumen estructurado</p>
+                <p class="mt-1 leading-relaxed">{{ ar.resumen_automatico }}</p>
+              </div>
+            }
+            @if (ar.confidence != null) {
+              <p class="text-xs text-slate-500">
+                Confidence (JSON): <span class="font-medium text-slate-700">{{ ar.confidence | number: '1.0-2' }}</span>
+              </p>
+            }
+          </div>
+        }
+      </section>
+
+      @if (showAssignmentAdminPanel()) {
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Asignación inteligente (scoring)</h2>
+          @if (candidatesLoading()) {
+            <p class="mt-3 text-sm text-slate-500">Cargando candidatos…</p>
+          } @else if (!candidates().length) {
+            <p class="mt-3 text-sm text-slate-500">Sin candidatos persistidos (p. ej. revisión manual o sin talleres en BD).</p>
+          } @else {
+            <div class="mt-4 overflow-x-auto rounded-xl border border-slate-100">
+              <table class="min-w-full divide-y divide-slate-100 text-left text-sm">
+                <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <tr>
+                    <th class="px-3 py-2">#</th>
+                    <th class="px-3 py-2">Taller</th>
+                    <th class="px-3 py-2">Téc. sug.</th>
+                    <th class="px-3 py-2">Score</th>
+                    <th class="px-3 py-2">Prio</th>
+                    <th class="px-3 py-2">Dist</th>
+                    <th class="px-3 py-2">Esp.</th>
+                    <th class="px-3 py-2">Disp.</th>
+                    <th class="px-3 py-2">ETA</th>
+                    <th class="px-3 py-2">Km</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  @for (c of candidates(); track c.taller_id) {
+                    <tr class="hover:bg-slate-50/80">
+                      <td class="px-3 py-2 font-medium text-slate-900">{{ c.rank }}</td>
+                      <td class="px-3 py-2 text-slate-800">{{ c.taller_id }}</td>
+                      <td class="px-3 py-2 text-slate-600">{{ c.tecnico_sugerido_id ?? '—' }}</td>
+                      <td class="px-3 py-2 font-mono text-xs text-slate-800">{{ c.score_total | number: '1.0-4' }}</td>
+                      <td class="px-3 py-2 text-xs text-slate-600">{{ c.breakdown.prioridad | number: '1.0-2' }}</td>
+                      <td class="px-3 py-2 text-xs text-slate-600">{{ c.breakdown.distancia | number: '1.0-2' }}</td>
+                      <td class="px-3 py-2 text-xs text-slate-600">{{ c.breakdown.especialidad | number: '1.0-2' }}</td>
+                      <td class="px-3 py-2 text-xs text-slate-600">{{ c.breakdown.disponibilidad | number: '1.0-2' }}</td>
+                      <td class="px-3 py-2 text-xs text-slate-600">{{ c.breakdown.eta | number: '1.0-2' }}</td>
+                      <td class="px-3 py-2 text-xs text-slate-600">
+                        {{ c.distancia_km != null ? (c.distancia_km | number: '1.0-2') : '—' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+            @if (canConfirmTopCandidate()) {
+              <div class="mt-5">
+                <button
+                  type="button"
+                  (click)="confirmarMejorCandidato()"
+                  [disabled]="actionLoading() !== null"
+                  class="inline-flex items-center justify-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
+                >
+                  @if (actionLoading() === 'confirmarAsignacion') {
+                    <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+                  }
+                  Confirmar asignación (candidato #1)
+                </button>
+              </div>
+            }
+          }
+          @if ((d.estado | lowercase) === 'revision manual' || (d.estado | lowercase) === 'pendiente') {
+            <div class="mt-6 border-t border-slate-100 pt-5">
+              <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Override manual (admin)</h3>
+              <p class="mt-2 text-sm text-slate-600">Taller y técnico deben existir en <code class="text-xs">mecanico_taller</code>.</p>
+              <div class="mt-4 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-500" for="ov-tid">ID taller</label>
+                  <input
+                    id="ov-tid"
+                    type="number"
+                    min="1"
+                    step="1"
+                    [value]="overrideTallerId()"
+                    (input)="onOverrideTallerInput($event)"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1 block text-xs font-medium text-slate-500" for="ov-uid">ID técnico (usuario)</label>
+                  <input
+                    id="ov-uid"
+                    type="number"
+                    min="1"
+                    step="1"
+                    [value]="overrideTecnicoId()"
+                    (input)="onOverrideTecnicoInput($event)"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                (click)="overrideAsignacionAdmin()"
+                [disabled]="actionLoading() !== null"
+                class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
+              >
+                @if (actionLoading() === 'overrideAsignacion') {
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" aria-hidden="true"></span>
+                }
+                Registrar override
+              </button>
+            </div>
+          }
+        </section>
+      }
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Descripción</h2>
+        <p class="mt-3 text-sm leading-relaxed text-slate-800">
+          {{ d.descripcion_texto || '— Sin descripción —' }}
+        </p>
+      </section>
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Calificación del cliente</h2>
+        @if (hasCalificacion()) {
+          @let cal = d.calificacion!;
+          <div class="mt-3 flex items-center gap-1">
+            @for (star of estrellasArray(cal.puntuacion); track $index) {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+                [class]="star ? 'h-5 w-5 text-amber-400' : 'h-5 w-5 text-slate-300'"
+                aria-hidden="true"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M10 1.5a.75.75 0 0 1 .673.418l2.041 4.136 4.565.663a.75.75 0 0 1 .416 1.279l-3.303 3.218.78 4.546a.75.75 0 0 1-1.088.79L10 14.355 5.916 16.55a.75.75 0 0 1-1.088-.79l.78-4.546-3.303-3.218a.75.75 0 0 1 .416-1.28l4.565-.662L9.327 1.92A.75.75 0 0 1 10 1.5Z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            }
+            <span class="ml-2 text-sm font-semibold text-slate-700">{{ cal.puntuacion }}/5</span>
+          </div>
+          @if (cal.comentario) {
+            <p class="mt-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700">
+              {{ cal.comentario }}
+            </p>
+          } @else {
+            <p class="mt-3 text-sm text-slate-500">Sin comentario adicional.</p>
+          }
+        } @else {
+          <p class="mt-3 text-sm text-slate-500">Este incidente todavía no tiene calificación registrada.</p>
+        }
+      </section>
+
+      @if (showAssignedBanner()) {
+        <section
+          class="rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50/90 to-white p-5 shadow-sm"
+          role="status"
+        >
+          <p class="text-xs font-semibold uppercase tracking-wide text-blue-800">Asignación</p>
+          <p class="mt-2 text-sm font-medium text-slate-900">{{ assignedTechnicianLabel() }}</p>
+        </section>
+      }
+
+      @if (showAcceptButton() || showRejectButton()) {
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Acciones</h2>
+          @if (isAdminUser() && showAcceptButton()) {
+            <p class="mt-2 text-sm text-slate-600">Como administrador, indicá el ID del usuario técnico que tomará la solicitud.</p>
+            <div class="mt-4">
+              <label class="mb-1.5 block text-xs font-medium uppercase tracking-wider text-slate-500" for="admin-tid"
+                >ID técnico</label
+              >
+              <input
+                id="admin-tid"
+                type="number"
+                min="1"
+                step="1"
+                [value]="adminTecnicoIdInput()"
+                (input)="onAdminTecnicoIdInput($event)"
+                placeholder="Ej. 5"
+                class="w-full max-w-xs rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+              />
+            </div>
+          } @else if (isTecnicoUser() && showRejectButton()) {
+            <p class="mt-2 text-sm text-slate-600">Aceptá para tomar la solicitud en tu nombre, o rechazá si no podés atenderla.</p>
+          }
+          <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
+            @if (showAcceptButton()) {
+              <button
+                type="button"
+                (click)="aceptarSolicitud()"
+                [disabled]="actionLoading() !== null"
+                class="inline-flex flex-1 min-w-[12rem] items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                @if (actionLoading() === 'aceptar') {
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" aria-hidden="true"></span>
+                  <span>Procesando…</span>
+                } @else {
+                  <span>Aceptar solicitud</span>
+                }
+              </button>
+            }
+            @if (showRejectButton()) {
+              <button
+                type="button"
+                (click)="rechazarSolicitud()"
+                [disabled]="actionLoading() !== null"
+                class="inline-flex flex-1 min-w-[12rem] items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                @if (actionLoading() === 'rechazar') {
+                  <span class="h-4 w-4 animate-spin rounded-full border-2 border-slate-500 border-t-transparent" aria-hidden="true"></span>
+                  <span>Procesando…</span>
+                } @else {
+                  <span>Rechazar</span>
+                }
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (showProgresoPanel()) {
+        <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Progreso del servicio</h2>
+          <p class="mt-2 text-sm text-slate-600">
+            Actualizá el estado del auxilio. Solo el técnico asignado puede usar estas acciones.
+          </p>
+          <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch">
+            @if (showProgresoEnCamino()) {
+              <button
+                type="button"
+                (click)="marcarEnCamino()"
+                [disabled]="actionLoading() !== null"
+                class="inline-flex min-h-[2.75rem] flex-1 min-w-[12rem] items-center justify-center gap-2 rounded-xl border-2 border-orange-500 bg-white px-5 py-3 text-sm font-semibold text-orange-600 shadow-sm transition hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                @if (actionLoading() === 'marcarEnCamino') {
+                  <span
+                    class="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent"
+                    aria-hidden="true"
+                  ></span>
+                  <span>Procesando…</span>
+                } @else {
+                  <span>Marcar En Camino</span>
+                }
+              </button>
+            }
+            @if (showProgresoIniciarTrabajo()) {
+              <button
+                type="button"
+                (click)="marcarEnProceso()"
+                [disabled]="actionLoading() !== null"
+                class="inline-flex min-h-[2.75rem] flex-1 min-w-[12rem] items-center justify-center gap-2 rounded-xl border-2 border-orange-500 bg-white px-5 py-3 text-sm font-semibold text-orange-600 shadow-sm transition hover:bg-orange-50 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                @if (actionLoading() === 'marcarEnProceso') {
+                  <span
+                    class="h-4 w-4 animate-spin rounded-full border-2 border-orange-500 border-t-transparent"
+                    aria-hidden="true"
+                  ></span>
+                  <span>Procesando…</span>
+                } @else {
+                  <span>Iniciar Trabajo</span>
+                }
+              </button>
+            }
+            @if (showProgresoFinalizar()) {
+              <button
+                type="button"
+                (click)="marcarFinalizado()"
+                [disabled]="actionLoading() !== null"
+                class="inline-flex min-h-[2.75rem] flex-1 min-w-[12rem] items-center justify-center gap-2 rounded-xl border border-emerald-600 bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                @if (actionLoading() === 'marcarFinalizado') {
+                  <span
+                    class="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"
+                    aria-hidden="true"
+                  ></span>
+                  <span>Procesando…</span>
+                } @else {
+                  <span>Finalizar Servicio</span>
+                }
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Evidencias</h2>
+          <span class="text-xs text-slate-500">{{ d.evidencias_count }} registrada(s)</span>
+        </div>
+        @if (!d.evidencias.length) {
+          <p class="mt-6 text-center text-sm text-slate-500">No hay evidencias adjuntas.</p>
+        } @else {
+          <ul class="mt-4 divide-y divide-slate-100">
+            @for (ev of d.evidencias; track ev.id) {
+              <li class="flex flex-wrap items-center justify-between gap-2 py-3 text-sm">
+                <div>
+                  <span class="font-medium text-slate-900">#{{ ev.id }}</span>
+                  <span class="ml-2 rounded-md bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-800">{{ ev.tipo }}</span>
+                </div>
+                <div class="min-w-0 flex-1 text-right text-xs text-slate-500">
+                  @if (ev.url_or_path) {
+                    <code class="truncate text-slate-600">{{ ev.url_or_path }}</code>
+                  } @else {
+                    <span class="italic">(texto / sin archivo)</span>
+                  }
+                </div>
+                @if (ev.created_at) {
+                  <div class="w-full text-xs text-slate-400 sm:w-auto sm:text-right">{{ ev.created_at | date: 'short' }}</div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <p class="text-center text-xs text-slate-500">
+        Alta de evidencias y creación de incidentes: API dedicada (app móvil cliente).
+      </p>
+    </div>
+  }
+</div>

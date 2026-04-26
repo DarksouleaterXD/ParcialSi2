@@ -59,6 +59,14 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>La app usa la cámara para adjuntar fotos del incidente.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>La app usa el micrófono para grabar audio del incidente.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>La app accede a la galería para adjuntar fotos del incidente.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>La app usa tu ubicación para reportar dónde ocurre la emergencia.</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

@@ -28,5 +28,31 @@ class Settings(BaseSettings):
     smtp_from: str = "noreply@emergencias.local"
     smtp_use_tls: bool = True
 
+    # IA mínima (transcripción Whisper u otro proveedor). Vacío => solo fallback determinístico.
+    openai_api_key: str = ""
+
+    # Google Gemini (multimodal). Sin GOOGLE_AI_API_KEY => fallback local determinístico.
+    google_ai_api_key: str = ""
+    google_ai_model: str = "gemini-2.0-flash"
+    ai_confidence_threshold: float = 0.55
+    ai_request_timeout_seconds: float = 60.0
+    ai_prompt_version: str = "v1"
+    assignment_weight_priority: float = 0.25
+    assignment_weight_distance: float = 0.25
+    assignment_weight_specialty: float = 0.25
+    assignment_weight_availability: float = 0.15
+    assignment_weight_eta: float = 0.10
+    assignment_avg_speed_kmh: float = 35.0
+
+    # CORS: en producción definir CORS_ORIGINS (coma, sin espacios dudosos). Lista cerrada; nunca "*"
+    # con allow_credentials. Si CORS_ORIGINS está vacío, se usan orígenes de desarrollo locales
+    # (ver main.py) y, si cors_allow_localhost_regex es True, un regex para cualquier puerto en
+    # localhost / 127.0.0.1 (útil para Flutter web, que elige un puerto aleatorio).
+    cors_origins: str = ""
+    cors_allow_localhost_regex: bool = True
+
+    stripe_secret_key: str = ""
+    stripe_webhook_secret: str = ""
+
 
 settings = Settings()

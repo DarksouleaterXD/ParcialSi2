@@ -35,14 +35,34 @@ class UserProfile {
             : fechaRaw.toString();
     return UserProfile(
       id: id,
-      nombre: json['nombre'] as String? ?? '',
-      apellido: json['apellido'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      telefono: json['telefono'] as String?,
-      estado: json['estado'] as String?,
+      nombre: _jsonReqStr(json['nombre']),
+      apellido: _jsonReqStr(json['apellido']),
+      email: _jsonReqStr(json['email']),
+      telefono: _jsonOptStr(json['telefono']),
+      estado: _jsonOptStr(json['estado']),
       roles: roles,
-      fotoPerfil: json['foto_perfil'] as String?,
+      fotoPerfil: _jsonOptStr(json['foto_perfil']),
       fechaRegistro: fechaStr,
     );
+  }
+
+  static String _jsonReqStr(Object? v) {
+    if (v == null) {
+      return '';
+    }
+    if (v is String) {
+      return v;
+    }
+    return v.toString();
+  }
+
+  static String? _jsonOptStr(Object? v) {
+    if (v == null) {
+      return null;
+    }
+    if (v is String) {
+      return v;
+    }
+    return v.toString();
   }
 }

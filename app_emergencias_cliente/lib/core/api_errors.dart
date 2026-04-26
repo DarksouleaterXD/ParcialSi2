@@ -14,8 +14,15 @@ String messageFromResponseBody(Object? decodedBody, {String fallback = 'Ocurrió
         final msg = item['msg'];
         if (msg is String) {
           parts.add(msg);
-        } else if (item['type'] is String) {
-          parts.add(item['type'] as String);
+        } else if (msg != null) {
+          parts.add(msg.toString());
+        } else {
+          final t = item['type'];
+          if (t is String) {
+            parts.add(t);
+          } else if (t != null) {
+            parts.add(t.toString());
+          }
         }
       } else if (item is String) {
         parts.add(item);

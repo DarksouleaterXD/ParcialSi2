@@ -93,7 +93,9 @@ CREATE TABLE Incidente (
     prioridad_ia VARCHAR(50),
     resumen_ia TEXT,
     confianza_ia DECIMAL(5, 2),
-    FOREIGN KEY (id_vehiculo) REFERENCES Vehiculo(id) ON DELETE RESTRICT
+    tecnico_id INT,
+    FOREIGN KEY (id_vehiculo) REFERENCES Vehiculo(id) ON DELETE RESTRICT,
+    FOREIGN KEY (tecnico_id) REFERENCES Usuario(id) ON DELETE SET NULL
 );
 
 CREATE TABLE Notificacion (
@@ -131,6 +133,24 @@ CREATE TABLE Evidencia (
     analisisDano_ia TEXT,
     fechaSubida TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (id_incidente) REFERENCES Incidente(id) ON DELETE CASCADE
+);
+
+-- Idempotencia CU-09 (POST /incidentes y evidencias): misma clave + mismo cuerpo = replay sin duplicar.
+-- Alineado con Alembic revision 004_idempotencia. Si ya migraste con Alembic, CREATE IF NOT EXISTS no hace nada.
+CREATE TABLE IF NOT EXISTS idempotencia_registro (
+    id SERIAL PRIMARY KEY,
+    alcance VARCHAR(50) NOT NULL,
+    clave VARCHAR(128) NOT NULL,
+    id_usuario INT NOT NULL,
+    huella_carga VARCHAR(64) NOT NULL,
+    id_incidente_ref INT,
+    id_evidencia_ref INT,
+    fechacreacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expira_en TIMESTAMP NOT NULL,
+    CONSTRAINT uq_idempotencia_usuario_alcance_clave UNIQUE (id_usuario, alcance, clave),
+    FOREIGN KEY (id_usuario) REFERENCES Usuario(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_incidente_ref) REFERENCES Incidente(id) ON DELETE CASCADE,
+    FOREIGN KEY (id_evidencia_ref) REFERENCES Evidencia(id) ON DELETE CASCADE
 );
 
 CREATE TABLE AsignacionServicio (

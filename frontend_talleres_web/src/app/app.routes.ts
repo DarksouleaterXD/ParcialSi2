@@ -61,6 +61,33 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/sistema/bitacora/bitacora-page.component').then((m) => m.BitacoraPageComponent),
       },
+      {
+        path: 'pagos',
+        loadComponent: () =>
+          import('./features/pagos/pagos-page.component').then((m) => m.PagosPageComponent),
+      },
+      {
+        path: 'incidentes',
+        loadComponent: () =>
+          import('./features/incidentes_servicios/incidentes-shell.component').then((m) => m.IncidentesShellComponent),
+        children: [
+          { path: '', pathMatch: 'full', redirectTo: 'solicitudes' },
+          {
+            path: 'solicitudes',
+            loadComponent: () =>
+              import('./features/incidentes_servicios/solicitudes/solicitudes-page.component').then(
+                (m) => m.SolicitudesPageComponent,
+              ),
+          },
+          {
+            path: 'solicitudes/:id',
+            loadComponent: () =>
+              import('./features/incidentes_servicios/solicitudes/solicitud-detalle-page.component').then(
+                (m) => m.SolicitudDetallePageComponent,
+              ),
+          },
+        ],
+      },
     ],
   },
   /** Rutas desconocidas: ir al shell; `authGuard` envía a login si no hay sesión. */

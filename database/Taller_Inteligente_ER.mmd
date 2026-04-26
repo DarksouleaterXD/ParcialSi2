@@ -1,0 +1,116 @@
+%% Taller Inteligente — entidad–relación (Mermaid)
+%% 19 tablas. Cardinalidad: || = exactamente una; o{ = cero o muchas; o| = cero o una; }| = al menos/muchos según conector.
+%% idempotencia_registro: además id_incidente_ref e id_evidencia_ref (FKs opcionales) hacia Incidente y Evidencia.
+%% TokenRevocado: sin FK; no se enlaza con otras entidades.
+%% Dibujar en: https://mermaid.live, GitHub (si soporta ER), o extensión Mermaid en VS Code.
+
+erDiagram
+  Usuario {
+    int id PK
+  }
+  Rol {
+    int id PK
+  }
+  Usuario_Rol {
+    int id_usuario FK
+    int id_rol FK
+  }
+  Vehiculo {
+    int id PK
+    int id_usuario FK
+  }
+  Especialidad {
+    int id PK
+  }
+  Taller {
+    int id PK
+    int id_admin FK
+  }
+  Taller_Especialidad {
+    int id_taller FK
+    int id_especialidad FK
+  }
+  Mecanico_Taller {
+    int id_usuario FK
+    int id_taller FK
+  }
+  Incidente {
+    int id PK
+    int id_vehiculo FK
+    int tecnico_id FK
+  }
+  Notificacion {
+    int id PK
+    int id_usuario FK
+  }
+  Bitacora {
+    int id PK
+    int id_usuario FK
+  }
+  Evidencia {
+    int id PK
+    int id_incidente FK
+  }
+  Taller_Candidato {
+    int id PK
+    int id_incidente FK
+    int id_taller FK
+  }
+  Mensaje_Incidente {
+    int id PK
+    int id_incidente FK
+    int id_remitente FK
+  }
+  idempotencia_registro {
+    int id PK
+    int id_usuario FK
+    int id_incidente_ref FK
+    int id_evidencia_ref FK
+  }
+  AsignacionServicio {
+    int id PK
+    int id_incidente FK
+    int id_taller FK
+    int id_mecanico FK
+  }
+  Pago {
+    int id PK
+    int id_asignacion UK
+  }
+  Calificacion {
+    int id PK
+    int id_asignacion UK
+  }
+  TokenRevocado {
+    string jti PK
+  }
+
+  Usuario ||--o{ Usuario_Rol : "rol de"
+  Rol ||--o{ Usuario_Rol : "asignado a"
+
+  Usuario ||--o{ Vehiculo : "posee"
+  Usuario ||--o{ Taller : "admin id_admin"
+  Usuario ||--o{ Notificacion : "recibe"
+  Usuario ||--o{ Bitacora : "genera"
+  Usuario ||--o{ Mecanico_Taller : "labora"
+  Usuario ||--o{ Incidente : "tecnico (opcional)"
+  Usuario ||--o{ Mensaje_Incidente : "remite"
+  Usuario ||--o{ idempotencia_registro : "clave idempotente"
+  Usuario ||--o{ AsignacionServicio : "mecanico asignado"
+
+  Taller ||--o{ Taller_Especialidad : "ofrece"
+  Especialidad ||--o{ Taller_Especialidad : "en talleres"
+
+  Taller ||--o{ Mecanico_Taller : "emplea"
+  Taller ||--o{ Taller_Candidato : "candidato IA"
+  Taller ||--o{ AsignacionServicio : "toma asignación"
+
+  Vehiculo ||--o{ Incidente : "origina"
+
+  Incidente ||--o{ Evidencia : "incluye"
+  Incidente ||--o{ Taller_Candidato : "candidaturas"
+  Incidente ||--o{ Mensaje_Incidente : "conversa"
+  Incidente ||--o{ AsignacionServicio : "despacha"
+
+  AsignacionServicio ||--|| Pago : "id_asignacion UNIQUE 1-1"
+  AsignacionServicio ||--|| Calificacion : "id_asignacion UNIQUE 1-1"
