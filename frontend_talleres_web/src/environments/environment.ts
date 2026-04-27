@@ -5,6 +5,6 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://REEMPLAZA-por-tu-servicio.onrender.com/api',
+  apiUrl: 'https://parcialsi2.onrender.com',
   authMock: false,
 };
