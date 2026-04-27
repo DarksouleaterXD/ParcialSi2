@@ -90,9 +90,9 @@ export class TechniciansPageComponent implements OnInit {
 
   loadTalleresOptions(): void {
     this.loadingTalleres.set(true);
-    this.talleresApi.list({ page: 1, pageSize: 200, activo: true }).subscribe({
-      next: (r) => {
-        this.talleres.set(r.items);
+    this.talleresApi.listAllActivos().subscribe({
+      next: (items) => {
+        this.talleres.set(items);
         this.loadingTalleres.set(false);
       },
       error: () => {

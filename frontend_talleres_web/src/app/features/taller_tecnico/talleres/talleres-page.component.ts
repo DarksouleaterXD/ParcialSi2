@@ -6,6 +6,14 @@ import {
   TallerListItem,
   TalleresApiService,
 } from '../../../core/services/talleres-api.service';
+import {
+  DIA_CORTO,
+  decodeHorarioString,
+  defaultHorarioStruct,
+  encodeHorarioStruct,
+  HorarioStruct,
+  resumenHorarioEnTabla,
+} from './horario-atencion';
 
 @Component({
   selector: 'app-talleres-page',
@@ -61,7 +69,6 @@ export class TalleresPageComponent implements OnInit {
     telefono: ['', [Validators.maxLength(20)]],
     email: ['', [Validators.maxLength(150)]],
     capacidad_maxima: [10, [Validators.required, Validators.min(1), Validators.max(50000)]],
-    horario_atencion: ['', [Validators.maxLength(120)]],
   });
 
   editForm = this.fb.nonNullable.group({
@@ -72,8 +79,16 @@ export class TalleresPageComponent implements OnInit {
     telefono: ['', [Validators.maxLength(20)]],
     email: ['', [Validators.maxLength(150)]],
     capacidad_maxima: [10, [Validators.required, Validators.min(1), Validators.max(50000)]],
-    horario_atencion: ['', [Validators.maxLength(120)]],
   });
+
+  /** Horario: días (Lun–Dom) + inicio/fin; se serializa a `D:…` (ver `horario-atencion.ts`). */
+  readonly createSchedule = signal<HorarioStruct>(defaultHorarioStruct());
+  readonly editSchedule = signal<HorarioStruct>(defaultHorarioStruct());
+  /** Texto legado (no `D:…`); al editar días/horas se reemplaza al guardar. */
+  readonly editHorarioLegacy = signal<string | null>(null);
+
+  readonly diaLabels = DIA_CORTO;
+  readonly dayIndices: readonly number[] = [0, 1, 2, 3, 4, 5, 6];
 
   ngOnInit(): void {
     this.loadTalleres();
@@ -140,8 +155,8 @@ export class TalleresPageComponent implements OnInit {
       telefono: '',
       email: '',
       capacidad_maxima: 10,
-      horario_atencion: '',
     });
+    this.createSchedule.set(defaultHorarioStruct());
     this.createOpen.set(true);
     this.scheduleCreateMapInit();
   }
@@ -164,8 +179,18 @@ export class TalleresPageComponent implements OnInit {
       telefono: t.telefono ?? '',
       email: t.email ?? '',
       capacidad_maxima: t.capacidad_maxima,
-      horario_atencion: t.horario_atencion ?? '',
     });
+    const h = decodeHorarioString(t.horario_atencion);
+    if (h.kind === 'legacy') {
+      this.editHorarioLegacy.set(h.text);
+      this.editSchedule.set(defaultHorarioStruct());
+    } else if (h.kind === 'struct') {
+      this.editHorarioLegacy.set(null);
+      this.editSchedule.set({ ...h.value });
+    } else {
+      this.editHorarioLegacy.set(null);
+      this.editSchedule.set(defaultHorarioStruct());
+    }
     this.editOpen.set(true);
     this.scheduleEditMapInit();
   }
@@ -199,9 +224,53 @@ export class TalleresPageComponent implements OnInit {
 
   closeEditModal(): void {
     this.editModalError = '';
+    this.editHorarioLegacy.set(null);
     this.destroyEditMap();
     this.editOpen.set(false);
     this.editId = null;
+  }
+
+  toggleCreateDay(i: number): void {
+    this.createSchedule.update((s) => {
+      const d = [...s.days] as boolean[];
+      d[i] = !d[i];
+      return { ...s, days: d as HorarioStruct['days'] };
+    });
+  }
+
+  onCreateInicio(e: Event): void {
+    const v = (e.target as HTMLInputElement).value;
+    this.createSchedule.update((s) => ({ ...s, inicio: v }));
+  }
+
+  onCreateFin(e: Event): void {
+    const v = (e.target as HTMLInputElement).value;
+    this.createSchedule.update((s) => ({ ...s, fin: v }));
+  }
+
+  toggleEditDay(i: number): void {
+    this.editHorarioLegacy.set(null);
+    this.editSchedule.update((s) => {
+      const d = [...s.days] as boolean[];
+      d[i] = !d[i];
+      return { ...s, days: d as HorarioStruct['days'] };
+    });
+  }
+
+  onEditInicio(e: Event): void {
+    this.editHorarioLegacy.set(null);
+    const v = (e.target as HTMLInputElement).value;
+    this.editSchedule.update((s) => ({ ...s, inicio: v }));
+  }
+
+  onEditFin(e: Event): void {
+    this.editHorarioLegacy.set(null);
+    const v = (e.target as HTMLInputElement).value;
+    this.editSchedule.update((s) => ({ ...s, fin: v }));
+  }
+
+  resumenHorario(hor: string | null | undefined): string {
+    return resumenHorarioEnTabla(hor);
   }
 
   private initCreateMapFromForm(): void {
@@ -383,6 +452,7 @@ export class TalleresPageComponent implements OnInit {
     if (Number.isNaN(lat) || Number.isNaN(lon)) {
       return null;
     }
+    const h = encodeHorarioStruct(this.createSchedule());
     return {
       nombre: v.nombre.trim(),
       direccion: v.direccion.trim(),
@@ -391,7 +461,7 @@ export class TalleresPageComponent implements OnInit {
       telefono: v.telefono?.trim() || null,
       email: v.email?.trim() || null,
       capacidad_maxima: v.capacidad_maxima,
-      horario_atencion: v.horario_atencion?.trim() || null,
+      horario_atencion: h,
     };
   }
 
@@ -407,6 +477,10 @@ export class TalleresPageComponent implements OnInit {
     }
     if (body.latitud < -90 || body.latitud > 90 || body.longitud < -180 || body.longitud > 180) {
       this.createModalError = 'Coordenadas fuera de rango (lat -90…90, lon -180…180).';
+      return;
+    }
+    if (!this.createSchedule().days.some((x) => x)) {
+      this.createModalError = 'Seleccioná al menos un día de atención.';
       return;
     }
     this.createSubmitting = true;
@@ -442,8 +516,13 @@ export class TalleresPageComponent implements OnInit {
       this.editModalError = 'Coordenadas fuera de rango (lat -90…90, lon -180…180).';
       return;
     }
+    if (!this.editSchedule().days.some((x) => x)) {
+      this.editModalError = 'Seleccioná al menos un día de atención.';
+      return;
+    }
     this.editSubmitting = true;
     this.editModalError = '';
+    const horEnc = encodeHorarioStruct(this.editSchedule());
     this.api
       .update(this.editId, {
         nombre: v.nombre.trim(),
@@ -453,7 +532,7 @@ export class TalleresPageComponent implements OnInit {
         telefono: v.telefono?.trim() || null,
         email: v.email?.trim() || null,
         capacidad_maxima: v.capacidad_maxima,
-        horario_atencion: v.horario_atencion?.trim() || null,
+        horario_atencion: horEnc,
       })
       .subscribe({
         next: () => {

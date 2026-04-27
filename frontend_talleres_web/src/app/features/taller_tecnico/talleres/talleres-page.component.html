@@ -108,7 +108,7 @@
                     <p class="font-medium text-slate-800">{{ t.nombre }}</p>
                     <p class="text-xs text-slate-500">{{ t.direccion }}</p>
                     @if (t.horario_atencion) {
-                      <p class="mt-0.5 text-xs text-slate-400">{{ t.horario_atencion }}</p>
+                      <p class="mt-0.5 text-xs text-slate-500">{{ resumenHorario(t.horario_atencion) }}</p>
                     }
                   </td>
                   <td class="px-4 py-3 font-mono text-xs text-slate-600">{{ gpsResumen(t) }}</td>
@@ -255,9 +255,47 @@
             <label class="mb-1 block text-xs font-medium text-slate-600" for="c-cap">Capacidad máxima</label>
             <input id="c-cap" type="number" formControlName="capacidad_maxima" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600" for="c-hor">Horario de atención</label>
-            <input id="c-hor" formControlName="horario_atencion" placeholder="Ej. Lun–Vie 8–18" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+            <p class="mb-2 text-xs font-medium text-slate-700">Horario de atención</p>
+            <p class="mb-2 text-[11px] text-slate-500">Elegí los días y la franja horaria (misma franja para todos los días marcados).</p>
+            <div class="flex flex-wrap gap-1.5">
+              @for (i of dayIndices; track i) {
+                <button
+                  type="button"
+                  (click)="toggleCreateDay(i)"
+                  class="min-w-[2.5rem] rounded-lg px-2.5 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1"
+                  [class]="
+                    createSchedule().days[i]
+                      ? 'bg-orange-500 text-white shadow-sm ring-1 ring-orange-600/20'
+                      : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100'
+                  "
+                >
+                  {{ diaLabels[i] }}
+                </button>
+              }
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="c-ti-ini">Inicio</label>
+                <input
+                  id="c-ti-ini"
+                  type="time"
+                  [value]="createSchedule().inicio"
+                  (input)="onCreateInicio($event)"
+                  class="w-full rounded-xl border-0 bg-white py-2 px-3 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="c-ti-fin">Fin</label>
+                <input
+                  id="c-ti-fin"
+                  type="time"
+                  [value]="createSchedule().fin"
+                  (input)="onCreateFin($event)"
+                  class="w-full rounded-xl border-0 bg-white py-2 px-3 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <div class="mt-auto border-t border-slate-100 bg-slate-50/80">
@@ -363,9 +401,56 @@
             <label class="mb-1 block text-xs font-medium text-slate-600" for="e-cap">Capacidad máxima</label>
             <input id="e-cap" type="number" formControlName="capacidad_maxima" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
           </div>
-          <div>
-            <label class="mb-1 block text-xs font-medium text-slate-600" for="e-hor">Horario</label>
-            <input id="e-hor" formControlName="horario_atencion" class="w-full rounded-xl border-0 bg-slate-100 py-2 px-3 text-sm focus:ring-2 focus:ring-orange-500" />
+          @if (editHorarioLegacy()) {
+            <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+              <p class="font-medium">Horario guardado actualmente (texto libre)</p>
+              <p class="mt-1 whitespace-pre-wrap text-xs leading-relaxed">{{ editHorarioLegacy() }}</p>
+              <p class="mt-2 text-xs text-amber-900/90">
+                No se pudo convertir automáticamente a días y horas. Ajustá los botones abajo y guardá para reemplazarlo por un horario estructurado.
+              </p>
+            </div>
+          }
+          <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">
+            <p class="mb-2 text-xs font-medium text-slate-700">Horario de atención</p>
+            <p class="mb-2 text-[11px] text-slate-500">Misma franja horaria para todos los días marcados.</p>
+            <div class="flex flex-wrap gap-1.5">
+              @for (i of dayIndices; track i) {
+                <button
+                  type="button"
+                  (click)="toggleEditDay(i)"
+                  class="min-w-[2.5rem] rounded-lg px-2.5 py-1.5 text-xs font-semibold transition focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-1"
+                  [class]="
+                    editSchedule().days[i]
+                      ? 'bg-orange-500 text-white shadow-sm ring-1 ring-orange-600/20'
+                      : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-100'
+                  "
+                >
+                  {{ diaLabels[i] }}
+                </button>
+              }
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="e-ti-ini">Inicio</label>
+                <input
+                  id="e-ti-ini"
+                  type="time"
+                  [value]="editSchedule().inicio"
+                  (input)="onEditInicio($event)"
+                  class="w-full rounded-xl border-0 bg-white py-2 px-3 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+              <div>
+                <label class="mb-1 block text-xs font-medium text-slate-600" for="e-ti-fin">Fin</label>
+                <input
+                  id="e-ti-fin"
+                  type="time"
+                  [value]="editSchedule().fin"
+                  (input)="onEditFin($event)"
+                  class="w-full rounded-xl border-0 bg-white py-2 px-3 text-sm ring-1 ring-slate-200 focus:ring-2 focus:ring-orange-500"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <div class="mt-auto border-t border-slate-100 bg-slate-50/80">
