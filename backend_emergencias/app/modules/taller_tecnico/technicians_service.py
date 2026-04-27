@@ -9,7 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
-from app.core.security import hash_password
+from app.core.security import hash_password, password_policy_violation
 from app.modules.sistema.bitacora_service import (
     AUDIT_ACTION_TECHNICIAN_CREATE,
     AUDIT_ACTION_TECHNICIAN_DEACTIVATE,
@@ -132,7 +132,30 @@ def technician_create(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Rol de técnico no disponible.")
 
     email_norm = str(body.email).strip().lower()
-    password_plano = secrets.token_urlsafe(12)
+    pw = (body.password or "").strip()
+    pwc = (body.password_confirmacion or "").strip()
+    enviar_correo = True
+    if pw or pwc:
+        if not pw or not pwc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Completá contraseña y confirmación.",
+            )
+        if pw != pwc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Las contraseñas no coinciden.",
+            )
+        policy_msg = password_policy_violation(pw)
+        if policy_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=policy_msg,
+            )
+        password_plano = pw
+        enviar_correo = False
+    else:
+        password_plano = secrets.token_urlsafe(12)
     u = Usuario(
         nombre=body.nombre.strip(),
         apellido=body.apellido.strip(),
@@ -165,12 +188,13 @@ def technician_create(
     db.refresh(u)
 
     nombre = f"{u.nombre} {u.apellido}".strip()
-    background_tasks.add_task(
-        enviar_credenciales_nuevo_usuario_sync,
-        destino=u.email,
-        password_plano=password_plano,
-        nombre=nombre,
-    )
+    if enviar_correo:
+        background_tasks.add_task(
+            enviar_credenciales_nuevo_usuario_sync,
+            destino=u.email,
+            password_plano=password_plano,
+            nombre=nombre,
+        )
     return TechnicianCreateResponse(
         id=u.id,
         nombre=u.nombre,

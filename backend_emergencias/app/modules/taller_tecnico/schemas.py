@@ -105,6 +105,8 @@ class TechnicianCreateRequest(BaseModel):
     email: EmailStr
     telefono: str | None = Field(None, max_length=20)
     especialidad: TechnicianSpecialty
+    password: str | None = Field(None, max_length=128)
+    password_confirmacion: str | None = Field(None, max_length=128)
 
 
 class TechnicianUpdateRequest(BaseModel):

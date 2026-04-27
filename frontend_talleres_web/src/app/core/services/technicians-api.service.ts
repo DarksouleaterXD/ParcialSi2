@@ -29,6 +29,9 @@ export interface TechnicianCreateBody {
   email: string;
   telefono?: string | null;
   especialidad: TechnicianSpecialty;
+  /** Si se envían ambas, el backend usa esta contraseña (misma política que el resto del sistema). Si no, genera una y puede enviar mail. */
+  password?: string | null;
+  password_confirmacion?: string | null;
 }
 
 export interface TechnicianCreateResponse extends TechnicianListItem {

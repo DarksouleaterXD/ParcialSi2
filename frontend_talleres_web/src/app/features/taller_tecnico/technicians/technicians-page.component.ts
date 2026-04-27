@@ -63,6 +63,8 @@ export class TechniciansPageComponent implements OnInit {
     email: ['', [Validators.required, Validators.email, Validators.maxLength(150)]],
     telefono: ['', [Validators.maxLength(20)]],
     especialidad: ['general' as TechnicianSpecialty, Validators.required],
+    password: ['', [Validators.maxLength(128)]],
+    passwordConfirm: ['', [Validators.maxLength(128)]],
   });
 
   editForm = this.fb.nonNullable.group({
@@ -143,6 +145,8 @@ export class TechniciansPageComponent implements OnInit {
       email: '',
       telefono: '',
       especialidad: 'general',
+      password: '',
+      passwordConfirm: '',
     });
     this.createOpen.set(true);
   }
@@ -151,29 +155,73 @@ export class TechniciansPageComponent implements OnInit {
     this.createOpen.set(false);
   }
 
+  private static passwordPolicyMessage(plain: string): string | null {
+    if (plain.length < 8) {
+      return 'La contraseña debe tener al menos 8 caracteres.';
+    }
+    if (!/[A-Za-z]/.test(plain)) {
+      return 'La contraseña debe incluir al menos una letra.';
+    }
+    if (!/\d/.test(plain)) {
+      return 'La contraseña debe incluir al menos un número.';
+    }
+    return null;
+  }
+
   submitCreate(): void {
     if (this.createForm.invalid || this.selectedTallerId() == null) {
       this.createForm.markAllAsTouched();
       return;
     }
-    const tid = this.selectedTallerId()!;
     const v = this.createForm.getRawValue();
+    const pw = v.password?.trim() ?? '';
+    const pwc = v.passwordConfirm?.trim() ?? '';
+    if (pw || pwc) {
+      if (!pw || !pwc) {
+        this.errorMessage.set('Completá contraseña y confirmación.');
+        return;
+      }
+      if (pw !== pwc) {
+        this.errorMessage.set('Las contraseñas no coinciden.');
+        return;
+      }
+      const pol = TechniciansPageComponent.passwordPolicyMessage(pw);
+      if (pol) {
+        this.errorMessage.set(pol);
+        return;
+      }
+    }
+    const tid = this.selectedTallerId()!;
     this.createSubmitting.set(true);
     this.errorMessage.set('');
-    this.techniciansApi
-      .create(tid, {
-        nombre: v.nombre.trim(),
-        apellido: v.apellido.trim(),
-        email: v.email.trim().toLowerCase(),
-        telefono: v.telefono.trim() || null,
-        especialidad: v.especialidad,
-      })
-      .subscribe({
+    const usedCustomPassword = Boolean(pw);
+    const payload: {
+      nombre: string;
+      apellido: string;
+      email: string;
+      telefono: string | null;
+      especialidad: TechnicianSpecialty;
+      password?: string;
+      password_confirmacion?: string;
+    } = {
+      nombre: v.nombre.trim(),
+      apellido: v.apellido.trim(),
+      email: v.email.trim().toLowerCase(),
+      telefono: v.telefono.trim() || null,
+      especialidad: v.especialidad,
+    };
+    if (usedCustomPassword) {
+      payload.password = pw;
+      payload.password_confirmacion = pwc;
+    }
+    this.techniciansApi.create(tid, payload).subscribe({
         next: () => {
           this.createSubmitting.set(false);
           this.closeCreate();
           this.successMessage.set(
-            'Técnico registrado. Se enviaron credenciales por correo cuando el servidor SMTP está configurado.',
+            usedCustomPassword
+              ? 'Técnico registrado con la contraseña indicada. No se envía por correo al definirla en el formulario.'
+              : 'Técnico registrado. Se enviaron credenciales por correo cuando el servidor SMTP está configurado.',
           );
           this.loadTechnicians();
         },
