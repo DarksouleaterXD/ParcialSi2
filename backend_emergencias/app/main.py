@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.database import engine
 from app.modules.incidentes_servicios.router import router as incidentes_router
 from app.modules.pagos.router import router as pagos_router
+from app.modules.sistema.notificaciones_api import notificaciones_router
 from app.modules.sistema.router import bitacora_router, router as sistema_router
 from app.modules.taller_tecnico.router import admin_talleres_router, router as taller_router
 from app.modules.usuario_autenticacion.router import auth_router, roles_router, users_router
@@ -26,6 +27,7 @@ app.include_router(users_router, prefix="/api")
 app.include_router(roles_router, prefix="/api")
 app.include_router(vehiculos_router, prefix="/api")
 app.include_router(sistema_router, prefix="/api")
+app.include_router(notificaciones_router, prefix="/api/sistema")
 app.include_router(bitacora_router, prefix="/api")
 app.include_router(taller_router, prefix="/api")
 app.include_router(admin_talleres_router, prefix="/api")

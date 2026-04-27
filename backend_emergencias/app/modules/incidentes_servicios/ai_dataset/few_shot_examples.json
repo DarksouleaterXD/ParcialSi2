@@ -1,0 +1,53 @@
+{
+  "dataset_version": "1.3.0",
+  "description": "Referencia mínima por categoría (bateria|llanta|choque|motor|otro). Si 'image' no existe en disco, el backend toma la primera imagen de images/<categoria>/.",
+  "examples": [
+    {
+      "id": "ref_llanta",
+      "image": "images/llanta/00008.jpg",
+      "descripcion_cliente": "Se bajó la goma, vibraba el auto al manejar.",
+      "output_esperado": {
+        "transcripcion": "",
+        "danos_identificados": ["Neumático desinflado o dañado", "Posible afectación de llanta"],
+        "categoria_incidente": "llanta",
+        "resumen_automatico": "Incidente de neumático. Prioridad según riesgo en vía. Asistencia con inflado, gato o reemplazo.",
+        "confidence": 0.85
+      }
+    },
+    {
+      "id": "ref_choque",
+      "image": "images/choque/major_191_jpg.rf.f3c4a4a9d22315d62bdb1746cc07a4c3.jpg",
+      "descripcion_cliente": "Raspón en el paragolpes en un estacionamiento.",
+      "output_esperado": {
+        "transcripcion": "",
+        "danos_identificados": ["Afectación a carrocería / pintura", "Golpe leve a panel"],
+        "categoria_incidente": "choque",
+        "resumen_automatico": "Daño estético por impacto. Revisar tolerancias, sensores y apertura de compuertas.",
+        "confidence": 0.82
+      }
+    },
+    {
+      "id": "ref_motor",
+      "image": "images/motor/90.jpg",
+      "descripcion_cliente": "Humo y olor, detuve el vehículo.",
+      "output_esperado": {
+        "transcripcion": "",
+        "danos_identificados": ["Posible sobrecalentamiento o fuga bajo el capot"],
+        "categoria_incidente": "motor",
+        "resumen_automatico": "Sospecha de falla de motor. No insistir con marcha. Asistencia mecánica o grúa.",
+        "confidence": 0.8
+      }
+    },
+    {
+      "id": "texto_bateria",
+      "descripcion_cliente": "No enciende, hace un clic, luces bajas.",
+      "output_esperado": {
+        "transcripcion": "",
+        "danos_identificados": [],
+        "categoria_incidente": "bateria",
+        "resumen_automatico": "Síntomas compatibles con batería o conexión eléctrica. Asistencia con puesta en marcha o batería.",
+        "confidence": 0.86
+      }
+    }
+  ]
+}

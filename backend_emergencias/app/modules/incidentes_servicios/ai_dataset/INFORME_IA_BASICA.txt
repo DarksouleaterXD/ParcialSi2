@@ -1,0 +1,36 @@
+Módulos 1.5.4 (IA multimodal) y 1.5.5 (asignación) — implementación mínima
+================================================================================
+
+Qué hace hoy el sistema
+-------------------------
+1) Tras crear un incidente, el backend encola el pipeline (Gemini + scoring de talleres).
+2) 1.5.4: Gemini recibe descripción, fotos, audios; devuelve JSON (transcripción, daños, categoría, resumen, confianza).
+3) 1.5.5: Con categoría e incidente en mapa, se calculan candidatos (distancia Haversine, pesos de config, estimación de ETA con velocidad media).
+
+Dataset `ai_dataset/`
+---------------------
+- `few_shot_examples.json`: textos de ejemplo; rutas bajo `images/<categ>/` como guía.
+- `ai_dataset_few_shot.py`: carga el JSON e inserta en el prompt referencias; adjunta hasta 4 imágenes reales de las carpetas si existen.
+- Si las carpetas están vacías, el few-shot queda en texto; la IA sigue funcionando.
+
+Requisitos para usar Gemini (no es opcional en prod para visión real)
+---------------------------------------------------------------------
+- Variable `GOOGLE_AI_API_KEY` en `backend_emergencias/.env`.
+- `pip install google-generativeai` (incluido en `requirements.txt` del proyecto).
+- Modelo: `google_ai_model` (por defecto `gemini-2.0-flash` o el que tenga tu clave en la API).
+
+Si NO hay clave
+---------------
+- Se usa `local_fallback` (heurística de texto) sin análisis real de imágenes ni audio: confianza moderada, estado puede ir a revisión manual o fallar el JSON si se fuerza otra vía. Esto explica pruebas con `ai_status: failed` sin API.
+
+Limitaciones (honestas)
+-----------------------
+- No es un "modelo entrenado" con el dataset: las fotos de `images/` son referencias few-shot, no un clasificador Keras/PyTorch.
+- La asignación es determinística (reglas + distancia), no aprendizaje.
+- Tiempos de ETA son aproximados a partir de distancia / `assignment_avg_speed_kmh` en `config.py`.
+
+Cómo ver resultados
+-------------------
+- Cliente móvil: detalle de solicitud → "Análisis asistido" y, si `ai_status == completed`, bloque "Talleres sugeridos".
+- Admin web: detalle de solicitud, tabla de scoring.
+- Candidatos solo existen en BD después de un pipeline con IA completada y al menos un taller con coordenadas.

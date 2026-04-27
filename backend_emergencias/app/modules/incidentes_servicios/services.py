@@ -67,6 +67,7 @@ from app.modules.sistema.bitacora_service import (
     AUDIT_MODULE_SISTEMA,
     registrar_bitacora,
 )
+from app.modules.sistema.notificaciones_in_app_service import insertar_notificacion_por_incidente
 from app.modules.sistema.idempotencia_service import (
     evidence_payload_fingerprint,
     find_evidence_idempotency,
@@ -91,6 +92,15 @@ ALLOWED_AUDIO_TYPES = frozenset(
         "audio/x-wav",
     },
 )
+# Clientes móviles a veces envían alias, `application/octet-stream` o un MIME faltante.
+_MEDIA_ALIASES: dict[str, str] = {
+    "image/jpg": "image/jpeg",
+    "image/pjpeg": "image/jpeg",
+    "image/x-png": "image/png",
+    "audio/x-m4a": "audio/mp4",
+    "audio/x-mpeg": "audio/mpeg",
+    "application/mp4": "audio/mp4",
+}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_AUDIO_BYTES = 15 * 1024 * 1024
 
@@ -161,7 +171,58 @@ def _extension_for_mime(mime: str) -> str:
     return mapping.get(base, ".bin")
 
 
-def _validate_file_magic(*, tipo: str, content_type: str | None, data: bytes) -> None:
+def _sniff_foto_mime(data: bytes) -> str | None:
+    if len(data) < 3:
+        return None
+    if data[:3] == b"\xff\xd8\xff":
+        return "image/jpeg"
+    if len(data) >= 8 and data[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
+def _sniff_audio_mime(data: bytes) -> str | None:
+    if len(data) < 2:
+        return None
+    if (data[0] == 0xFF and (data[1] & 0xE0) == 0xE0) or (len(data) >= 3 and data[:3] == b"ID3"):
+        return "audio/mpeg"
+    if len(data) >= 12 and data[0:4] == b"RIFF" and data[8:12] == b"WAVE":
+        return "audio/wav"
+    if len(data) >= 4 and data[:4] == b"\x1a\x45\xdf\xa3":
+        return "audio/webm"
+    if len(data) >= 8 and data[4:8] == b"ftyp":
+        return "audio/mp4"
+    # M4A/MP4: a veces hay caja "free" u otra antes de ftyp (Android / grabadores móviles)
+    cap = min(len(data), 80)
+    for i in range(0, max(0, cap - 3)):
+        if data[i : i + 4] == b"ftyp":
+            return "audio/mp4"
+    return None
+
+
+def _resolve_evidencia_content_type(*, tipo: str, file_content_type: str | None, data: bytes) -> str:
+    allow = ALLOWED_IMAGE_TYPES if tipo == "foto" else ALLOWED_AUDIO_TYPES
+    base = (file_content_type or "").split(";")[0].strip().lower()
+    if base in _MEDIA_ALIASES:
+        base = _MEDIA_ALIASES[base]
+    if base == "video/mp4" and tipo == "audio":
+        base = "audio/mp4"
+    if base in allow:
+        return base
+    if base in ("", "application/octet-stream", "binary/octet-stream") or base not in allow:
+        guessed = _sniff_foto_mime(data) if tipo == "foto" else _sniff_audio_mime(data)
+        if guessed in allow:
+            return guessed
+    raise HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail=f"Tipo MIME no permitido para {tipo}: {file_content_type!r}",
+    )
+
+
+def _validate_file_magic(*, tipo: str, content_type: str, data: bytes) -> None:
+    """`content_type` canónico (ya resuelto por [resolve_evidencia_content_type])."""
     ct = (content_type or "").split(";")[0].strip().lower()
     if tipo == "foto":
         if ct not in ALLOWED_IMAGE_TYPES:
@@ -489,6 +550,7 @@ def add_evidence_to_incident(
     url_rel = ""
     texto: str | None = None
     fp: str
+    coerced_mime: str | None = None
 
     if tipo == "texto":
         t = (contenido_texto or "").strip()
@@ -513,7 +575,11 @@ def add_evidence_to_incident(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="archivo es obligatorio para foto o audio",
             )
-        _validate_file_magic(tipo=tipo, content_type=file_content_type, data=file_bytes)
+        coerced = _resolve_evidencia_content_type(
+            tipo=tipo, file_content_type=file_content_type, data=file_bytes
+        )
+        coerced_mime = coerced
+        _validate_file_magic(tipo=tipo, content_type=coerced, data=file_bytes)
         fp = evidence_payload_fingerprint(inc.id, tipo, file_bytes=file_bytes, contenido_texto=None)
         texto = None
 
@@ -532,8 +598,8 @@ def add_evidence_to_incident(
                 False,
             )
 
-    if tipo != "texto":
-        ext = _extension_for_mime(file_content_type or "")
+    if tipo != "texto" and coerced_mime is not None:
+        ext = _extension_for_mime(coerced_mime)
         url_rel = _persist_upload(incidente_id=inc.id, data=file_bytes or b"", ext=ext)
 
     ev = Evidencia(
@@ -745,6 +811,12 @@ def aceptar_solicitud(
             status_code=status.HTTP_409_CONFLICT,
             detail="Esta solicitud ya no está disponible.",
         )
+    insertar_notificacion_por_incidente(
+        db,
+        incidente_id,
+        titulo="Solicitud asignada",
+        mensaje=f"Un técnico aceptó tu emergencia (solicitud #{incidente_id}).",
+    )
     registrar_bitacora(
         db,
         id_usuario=user.id,
@@ -922,6 +994,12 @@ def marcar_en_camino(
             detail="Solo se puede marcar 'En Camino' cuando el estado es Asignado.",
         )
     inc.estado = _ESTADO_EN_CAMINO
+    insertar_notificacion_por_incidente(
+        db,
+        incidente_id,
+        titulo="Ayuda en camino",
+        mensaje=f"El técnico va hacia tu ubicación (solicitud #{incidente_id}).",
+    )
     registrar_bitacora(
         db,
         id_usuario=user.id,
@@ -951,6 +1029,12 @@ def marcar_en_proceso(
             detail="Solo se puede marcar 'En Proceso' cuando el estado es En Camino.",
         )
     inc.estado = _ESTADO_EN_PROCESO
+    insertar_notificacion_por_incidente(
+        db,
+        incidente_id,
+        titulo="Servicio en curso",
+        mensaje=f"El técnico está atendiendo tu vehículo (solicitud #{incidente_id}).",
+    )
     registrar_bitacora(
         db,
         id_usuario=user.id,
@@ -988,6 +1072,12 @@ def finalizar_servicio(
         tag = (body.diagnostico_final or "")[:20]
         extra = f" d={tag}"
         resultado = f"{resultado}{extra}"[:50]
+    insertar_notificacion_por_incidente(
+        db,
+        incidente_id,
+        titulo="Servicio finalizado",
+        mensaje=f"El servicio fue cerrado. Podés calificar la atención (solicitud #{incidente_id}).",
+    )
     registrar_bitacora(
         db,
         id_usuario=user.id,
@@ -1145,6 +1235,8 @@ def get_incident_ia_result_endpoint(db: Session, user: Usuario, incidente_id: in
 
 
 def list_assignment_candidates_endpoint(db: Session, user: Usuario, incidente_id: int) -> AssignmentCandidatesResponse:
+    from app.modules.incidentes_servicios.ai_assignment_schemas import AssignmentCandidate
+
     inc = _assert_incident_access(db, user, incidente_id, with_evidencias=False)
     ar = assignment_result_from_db(db, incidente_id)
     trace = None
@@ -1153,10 +1245,20 @@ def list_assignment_candidates_endpoint(db: Session, user: Usuario, incidente_id
             trace = json.loads(inc.assignment_trace_json)
         except json.JSONDecodeError:
             trace = None
+    raw_c = ar.candidates if ar else []
+    candidates: list[AssignmentCandidate] = []
+    for c in raw_c:
+        t = db.get(Taller, c.taller_id)
+        nombre = (t.nombre or "").strip() if t else None
+        candidates.append(
+            c.model_copy(
+                update={"taller_nombre": nombre or None},
+            )
+        )
     return AssignmentCandidatesResponse(
         incidente_id=incidente_id,
         estado=inc.estado or ESTADO_INICIAL_INCIDENTE,
-        candidates=ar.candidates if ar else [],
+        candidates=candidates,
         assignment_trace=trace,
     )
 
@@ -1201,6 +1303,12 @@ def confirm_assignment_endpoint(
         )
     inc.estado = "Asignado"
     inc.tecnico_id = int(tid)
+    insertar_notificacion_por_incidente(
+        db,
+        incidente_id,
+        titulo="Solicitud asignada",
+        mensaje=f"Se asignó un técnico a tu emergencia (solicitud #{incidente_id}).",
+    )
     registrar_bitacora(
         db,
         id_usuario=user.id,
@@ -1246,6 +1354,12 @@ def override_assignment_endpoint(
         )
     inc.estado = "Asignado"
     inc.tecnico_id = body.tecnico_id
+    insertar_notificacion_por_incidente(
+        db,
+        incidente_id,
+        titulo="Solicitud asignada",
+        mensaje=f"Se asignó un técnico a tu emergencia (solicitud #{incidente_id}).",
+    )
     registrar_bitacora(
         db,
         id_usuario=user.id,

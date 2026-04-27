@@ -11,7 +11,11 @@ from pathlib import Path
 from typing import Any
 
 from app.core.config import settings
-from app.modules.incidentes_servicios.ai_assignment_schemas import AiIncidentResult, CategoriaIncidenteIA
+from app.modules.incidentes_servicios.ai_assignment_schemas import (
+    AiIncidentResult,
+    CategoriaIncidenteIA,
+)
+from app.modules.incidentes_servicios.ai_dataset_few_shot import build_few_shot_blocks
 
 logger = logging.getLogger(__name__)
 
@@ -55,14 +59,28 @@ def _parse_model_json(text: str) -> dict[str, Any]:
     return json.loads(s)
 
 
-def _validate_strict_ai_payload(data: dict[str, Any]) -> dict[str, Any]:
-    expected = {"transcripcion", "danos_identificados", "categoria_incidente", "resumen_automatico", "confidence"}
-    keys = set(data.keys())
-    if keys != expected:
-        missing = sorted(expected - keys)
-        extra = sorted(keys - expected)
-        raise ValueError(f"JSON IA inválido. missing={missing} extra={extra}")
-    return data
+def _to_ai_result(data: dict[str, Any]) -> AiIncidentResult:
+    """Acepta JSON estricto o con claves extra; tolera modelos que devuelven variantes mínimas."""
+    raw = data
+    if not isinstance(raw, dict):
+        raise ValueError("IA: respuesta no es un objeto JSON")
+    conf_raw = raw.get("confidence", 0.6)
+    try:
+        c = float(conf_raw)
+    except (TypeError, ValueError):
+        c = 0.6
+    c = min(1.0, max(0.0, c))
+    danos = raw.get("danos_identificados")
+    if not isinstance(danos, list):
+        danos = []
+    danos = [str(x).strip() for x in danos if str(x).strip()][:30]
+    return AiIncidentResult(
+        transcripcion=str(raw.get("transcripcion") or "")[:50000],
+        danos_identificados=danos,
+        categoria_incidente=_normalize_categoria(str(raw.get("categoria_incidente") or "otro")),
+        resumen_automatico=(str(raw.get("resumen_automatico") or "Sin resumen estructurado."))[:20000],
+        confidence=c,
+    )
 
 
 def _fallback_local_result(descripcion: str, *, has_audio: bool, has_photo: bool) -> AiIncidentResult:
@@ -119,8 +137,14 @@ def analyze_with_google(
         },
     )
 
+    few_text, ref_images = build_few_shot_blocks()
     parts: list[Any] = []
     parts.append(_JSON_INSTRUCTION)
+    parts.append(few_text)
+    for i, (img_bytes, mime) in enumerate(ref_images, start=1):
+        parts.append(f"Imagen de referencia {i} (dataset interno, solo guía):")
+        parts.append({"mime_type": mime, "data": img_bytes})
+    parts.append("=== ANÁLISIS DEL PEDIDO ACTUAL (cliente) ===\n")
     parts.append(f"Descripción del cliente (sanitizada):\n{descripcion_sanitizada or '(vacía)'}\n")
     for rel in rutas_imagen_relativas[:4]:
         p = uploads_root / rel
@@ -158,13 +182,11 @@ def analyze_with_google(
                     fut.cancel()
                     raise TimeoutError(f"Gemini timeout ({timeout_s:.0f}s)") from exc
                 raw_text = (resp.text or "").strip()
-                data = _validate_strict_ai_payload(_parse_model_json(raw_text))
-                data["categoria_incidente"] = _normalize_categoria(str(data.get("categoria_incidente", "otro")))
-                return (
-                    AiIncidentResult.model_validate(data),
-                    "google_gemini",
-                    model_name,
-                )
+                data = _parse_model_json(raw_text)
+                if not isinstance(data, dict):
+                    raise ValueError("IA: JSON no es un objeto")
+                r = _to_ai_result(data)
+                return (r, "google_gemini", model_name)
             except BaseException as exc:
                 last_err = exc
                 logger.warning("Gemini intento %s falló: %s", attempt + 1, exc)
@@ -172,4 +194,6 @@ def analyze_with_google(
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
     assert last_err is not None
-    raise last_err
+    logger.error("Gemini: agotados reintentos, usando heurística local. Último error: %s", last_err)
+    r = _fallback_local_result(descripcion_sanitizada, has_audio=has_audio, has_photo=has_photo)
+    return (r, "local_fallback", f"gemini-failed:{type(last_err).__name__}")

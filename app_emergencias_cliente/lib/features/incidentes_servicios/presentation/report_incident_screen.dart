@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -71,15 +72,14 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   final MapController _mapController = MapController();
   static const LatLng _fallbackCenter = LatLng(-17.7833, -63.1821);
 
-  List<int>? _photoBytes;
-  String? _photoMime;
-  String? _photoName;
+  final List<ReportPhotoItem> _photoItems = [];
 
   List<int>? _audioBytes;
   String? _audioMime;
   String? _audioName;
 
   var _isRecording = false;
+  var _isRecordStarting = false;
   var _recordSeconds = 0;
   Timer? _recordTimer;
 
@@ -193,6 +193,18 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   }
 
   Future<void> _pickPhoto() async {
+    if (_photoItems.length >= ReportSubmitPayload.maxPhotosPerReport) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Llegaste al máximo de fotos por reporte. Quitá una con la X en el chip para agregar otra.',
+            ),
+          ),
+        );
+      }
+      return;
+    }
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -234,9 +246,13 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       return;
     }
     setState(() {
-      _photoBytes = bytes;
-      _photoMime = mime;
-      _photoName = _safeFileName(file.path, mime);
+      _photoItems.add(
+        ReportPhotoItem(
+          bytes: bytes,
+          mime: mime,
+          filename: _safeFileName(file.path, mime),
+        ),
+      );
     });
   }
 
@@ -297,57 +313,114 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       setState(() => _isRecording = false);
       if (path != null && path.isNotEmpty) {
         final file = File(path);
-        if (await file.exists()) {
-          final bytes = await file.readAsBytes();
-          final detectedAudioMime = _detectAudioMime(bytes) ?? 'audio/mp4';
-          if (!mounted) {
-            return;
+        Uint8List? bytes;
+        for (var attempt = 0; attempt < 8; attempt++) {
+          if (await file.exists()) {
+            final b = await file.readAsBytes();
+            if (b.isNotEmpty) {
+              bytes = b;
+              break;
+            }
           }
-          setState(() {
-            _audioBytes = bytes;
-            _audioMime = detectedAudioMime;
-            _audioName = _audioFileNameForMime(detectedAudioMime);
-          });
+          await Future<void>.delayed(const Duration(milliseconds: 100));
+        }
+        if (bytes == null || bytes.isEmpty) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'No se pudo leer la grabación (archivo vacío o aún en uso). Volvé a grabar 2–3 segundos o más y detené con el botón rojo.',
+                ),
+              ),
+            );
+          }
+          return;
+        }
+        final detectedAudioMime = _detectAudioMime(bytes) ?? 'audio/mp4';
+        if (!mounted) {
+          return;
+        }
+        setState(() {
+          _audioBytes = List<int>.from(bytes!);
+          _audioMime = detectedAudioMime;
+          _audioName = _audioFileNameForMime(detectedAudioMime);
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se generó ruta de audio. Revisá el permiso de micrófono o probá otra vez.'),
+            ),
+          );
         }
       }
       return;
     }
 
-    final mic = await Permission.microphone.request();
-    if (!mic.isGranted) {
+    if (kIsWeb) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Se necesita permiso de micrófono para grabar.')),
+          const SnackBar(
+            content: Text(
+              'La grabación de audio no está disponible en el navegador. Usá la app en Android o iOS.',
+            ),
+          ),
         );
       }
       return;
     }
-    if (!await _audioRecorder.hasPermission()) {
+
+    setState(() => _isRecordStarting = true);
+    try {
+      final mic = await Permission.microphone.request();
+      if (!mic.isGranted) {
+        if (mounted) {
+          setState(() => _isRecordStarting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Se necesita permiso de micrófono para grabar.')),
+          );
+        }
+        return;
+      }
+      if (!await _audioRecorder.hasPermission()) {
+        if (mounted) {
+          setState(() => _isRecordStarting = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No se pudo acceder al micrófono.')),
+          );
+        }
+        return;
+      }
+      final dir = await getTemporaryDirectory();
+      final path = '${dir.path}/cu09_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _audioRecorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc),
+        path: path,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isRecordStarting = false;
+        _isRecording = true;
+        _recordSeconds = 0;
+      });
+      _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          setState(() => _recordSeconds++);
+        }
+      });
+    } on Object catch (e, st) {
       if (mounted) {
+        setState(() => _isRecordStarting = false);
+        debugPrint('record start failed: $e\n$st');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo acceder al micrófono.')),
+          SnackBar(
+            content: Text('No se pudo iniciar la grabación: $e'),
+          ),
         );
       }
-      return;
     }
-    final dir = await getTemporaryDirectory();
-    final path = '${dir.path}/cu09_${DateTime.now().millisecondsSinceEpoch}.m4a';
-    await _audioRecorder.start(
-      const RecordConfig(encoder: AudioEncoder.aacLc),
-      path: path,
-    );
-    if (!mounted) {
-      return;
-    }
-    setState(() {
-      _isRecording = true;
-      _recordSeconds = 0;
-    });
-    _recordTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() => _recordSeconds++);
-      }
-    });
   }
 
   String? _detectAudioMime(Uint8List bytes) {
@@ -378,12 +451,17 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
         bytes[3] == 0xA3) {
       return 'audio/webm';
     }
-    if (bytes.length >= 12 &&
+    if (bytes.length >= 8 &&
         bytes[4] == 0x66 &&
         bytes[5] == 0x74 &&
         bytes[6] == 0x79 &&
         bytes[7] == 0x70) {
       return 'audio/mp4';
+    }
+    for (var i = 0; i <= 76 && i + 4 < bytes.length; i++) {
+      if (bytes[i] == 0x66 && bytes[i + 1] == 0x74 && bytes[i + 2] == 0x79 && bytes[i + 3] == 0x70) {
+        return 'audio/mp4';
+      }
     }
     return null;
   }
@@ -513,9 +591,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       latitud: lat,
       longitud: lng,
       descripcionTexto: _desc.text.trim().isEmpty ? null : _desc.text.trim(),
-      photoBytes: _photoBytes,
-      photoMimeType: _photoMime,
-      photoFilename: _photoName,
+      photos: List<ReportPhotoItem>.from(_photoItems),
       audioBytes: _audioBytes,
       audioMimeType: _audioMime,
       audioFilename: _audioName,
@@ -717,16 +793,19 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       return EvidenceAttachPanel(
         descriptionController: _desc,
         extraTextController: _extraText,
-        hasPhoto: _photoBytes != null && _photoBytes!.isNotEmpty,
+        photoCount: _photoItems.length,
+        maxPhotos: ReportSubmitPayload.maxPhotosPerReport,
         hasAudio: _audioBytes != null && _audioBytes!.isNotEmpty,
+        isRecordStarting: _isRecordStarting,
         isRecording: _isRecording,
         recordingSeconds: _recordSeconds,
         onPickPhoto: _pickPhoto,
-        onClearPhoto: () => setState(() {
-          _photoBytes = null;
-          _photoMime = null;
-          _photoName = null;
-        }),
+        onRemovePhoto: (index) {
+          if (index < 0 || index >= _photoItems.length) {
+            return;
+          }
+          setState(() => _photoItems.removeAt(index));
+        },
         onToggleRecord: _toggleRecording,
         onClearAudio: () => setState(() {
           _audioBytes = null;
@@ -919,19 +998,24 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                 ),
                 if (_extraText.text.trim().isNotEmpty)
                   _reviewRow('Nota adicional', _extraText.text.trim()),
-                _reviewRow(
-                  'Evidencias',
-                  [
-                    if (_photoBytes != null && _photoBytes!.isNotEmpty) 'Foto',
-                    if (_audioBytes != null && _audioBytes!.isNotEmpty) 'Audio',
-                  ].join(', ').ifEmpty('Ninguna'),
-                ),
+                _reviewRow('Evidencias', _evidenceReviewLine()),
               ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  String _evidenceReviewLine() {
+    final p = <String>[];
+    if (_photoItems.isNotEmpty) {
+      p.add(_photoItems.length == 1 ? '1 foto' : '${_photoItems.length} fotos');
+    }
+    if (_audioBytes != null && _audioBytes!.isNotEmpty) {
+      p.add('Audio');
+    }
+    return p.join(' · ').ifEmpty('Ninguna');
   }
 
   Widget _reviewRow(String k, String v) {

@@ -48,6 +48,10 @@ class AssignmentScoreBreakdown(BaseModel):
 class AssignmentCandidate(BaseModel):
     taller_id: int
     tecnico_sugerido_id: int | None = None
+    taller_nombre: str | None = Field(
+        default=None,
+        description="Denominación del taller (enriquecido en API; no siempre en filas antiguas).",
+    )
     rank: int = Field(..., ge=1)
     score_total: float
     breakdown: AssignmentScoreBreakdown

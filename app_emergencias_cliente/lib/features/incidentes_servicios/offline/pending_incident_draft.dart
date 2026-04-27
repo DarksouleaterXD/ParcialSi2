@@ -1,3 +1,5 @@
+import 'pending_photo_info.dart';
+
 /// Borrador persistido para reintentar `POST /incidentes` y evidencias sin duplicar (misma `Idempotency-Key`).
 class PendingIncidentDraft {
   const PendingIncidentDraft({
@@ -11,15 +13,12 @@ class PendingIncidentDraft {
     required this.longitud,
     this.descripcionTexto,
     this.extraTextEvidence,
-    this.photoAbsPath,
-    this.photoMimeType,
-    this.photoFilename,
+    this.photos = const [],
     this.audioAbsPath,
     this.audioMimeType,
     this.audioFilename,
     this.serverIncidentId,
     this.textEvidenceDone = false,
-    this.photoEvidenceDone = false,
     this.audioEvidenceDone = false,
     this.lastErrorMessage,
   });
@@ -27,7 +26,6 @@ class PendingIncidentDraft {
   final String localId;
   final DateTime savedAt;
   final String incidentIdempotencyKey;
-  /// Carpeta dedicada (`…/pending_incidents/{localId}`) para borrar al descartar o completar.
   final String storageDir;
   final int vehiculoId;
   final String vehiculoLabel;
@@ -35,16 +33,13 @@ class PendingIncidentDraft {
   final double longitud;
   final String? descripcionTexto;
   final String? extraTextEvidence;
-  final String? photoAbsPath;
-  final String? photoMimeType;
-  final String? photoFilename;
+  final List<PendingPhotoInfo> photos;
   final String? audioAbsPath;
   final String? audioMimeType;
   final String? audioFilename;
 
   final int? serverIncidentId;
   final bool textEvidenceDone;
-  final bool photoEvidenceDone;
   final bool audioEvidenceDone;
   final String? lastErrorMessage;
 
@@ -53,12 +48,7 @@ class PendingIncidentDraft {
   bool get needsTextEvidence =>
       extraTextEvidence != null && extraTextEvidence!.trim().isNotEmpty && !textEvidenceDone;
 
-  bool get needsPhotoEvidence =>
-      photoAbsPath != null &&
-      photoAbsPath!.isNotEmpty &&
-      photoMimeType != null &&
-      photoFilename != null &&
-      !photoEvidenceDone;
+  bool get needsAnyPhotoUpload => photos.any((p) => p.isPendingUpload);
 
   bool get needsAudioEvidence =>
       audioAbsPath != null &&
@@ -70,16 +60,16 @@ class PendingIncidentDraft {
   bool get isComplete =>
       !needsCreate &&
       (!needsTextEvidence) &&
-      (!needsPhotoEvidence) &&
+      !needsAnyPhotoUpload &&
       (!needsAudioEvidence);
 
   PendingIncidentDraft copyWith({
     int? serverIncidentId,
     bool? textEvidenceDone,
-    bool? photoEvidenceDone,
     bool? audioEvidenceDone,
     String? lastErrorMessage,
     bool clearLastError = false,
+    List<PendingPhotoInfo>? photos,
   }) {
     return PendingIncidentDraft(
       localId: localId,
@@ -92,15 +82,12 @@ class PendingIncidentDraft {
       longitud: longitud,
       descripcionTexto: descripcionTexto,
       extraTextEvidence: extraTextEvidence,
-      photoAbsPath: photoAbsPath,
-      photoMimeType: photoMimeType,
-      photoFilename: photoFilename,
+      photos: photos ?? this.photos,
       audioAbsPath: audioAbsPath,
       audioMimeType: audioMimeType,
       audioFilename: audioFilename,
       serverIncidentId: serverIncidentId ?? this.serverIncidentId,
       textEvidenceDone: textEvidenceDone ?? this.textEvidenceDone,
-      photoEvidenceDone: photoEvidenceDone ?? this.photoEvidenceDone,
       audioEvidenceDone: audioEvidenceDone ?? this.audioEvidenceDone,
       lastErrorMessage: clearLastError ? null : (lastErrorMessage ?? this.lastErrorMessage),
     );
@@ -118,21 +105,42 @@ class PendingIncidentDraft {
       'longitud': longitud,
       'descripcionTexto': descripcionTexto,
       'extraTextEvidence': extraTextEvidence,
-      'photoAbsPath': photoAbsPath,
-      'photoMimeType': photoMimeType,
-      'photoFilename': photoFilename,
+      'photos': photos.map((e) => e.toJson()).toList(),
       'audioAbsPath': audioAbsPath,
       'audioMimeType': audioMimeType,
       'audioFilename': audioFilename,
       'serverIncidentId': serverIncidentId,
       'textEvidenceDone': textEvidenceDone,
-      'photoEvidenceDone': photoEvidenceDone,
       'audioEvidenceDone': audioEvidenceDone,
       'lastErrorMessage': lastErrorMessage,
     };
   }
 
   factory PendingIncidentDraft.fromJson(Map<String, dynamic> j) {
+    var photos = <PendingPhotoInfo>[];
+    final rawPhotos = j['photos'];
+    if (rawPhotos is List && rawPhotos.isNotEmpty) {
+      for (final e in rawPhotos) {
+        if (e is Map<String, dynamic>) {
+          photos.add(PendingPhotoInfo.fromJson(e));
+        } else if (e is Map) {
+          photos.add(PendingPhotoInfo.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+    if (photos.isEmpty) {
+      final legacy = j['photoAbsPath'] as String?;
+      if (legacy != null && legacy.isNotEmpty) {
+        photos = [
+          PendingPhotoInfo(
+            absPath: legacy,
+            mime: j['photoMimeType'] as String? ?? 'image/jpeg',
+            filename: j['photoFilename'] as String? ?? 'foto.jpg',
+            evidenceDone: j['photoEvidenceDone'] as bool? ?? false,
+          ),
+        ];
+      }
+    }
     return PendingIncidentDraft(
       localId: j['localId'] as String? ?? '',
       savedAt: DateTime.tryParse(j['savedAt'] as String? ?? '') ?? DateTime.now(),
@@ -144,15 +152,12 @@ class PendingIncidentDraft {
       longitud: (j['longitud'] as num?)?.toDouble() ?? 0,
       descripcionTexto: j['descripcionTexto'] as String?,
       extraTextEvidence: j['extraTextEvidence'] as String?,
-      photoAbsPath: j['photoAbsPath'] as String?,
-      photoMimeType: j['photoMimeType'] as String?,
-      photoFilename: j['photoFilename'] as String?,
+      photos: photos,
       audioAbsPath: j['audioAbsPath'] as String?,
       audioMimeType: j['audioMimeType'] as String?,
       audioFilename: j['audioFilename'] as String?,
       serverIncidentId: (j['serverIncidentId'] as num?)?.toInt(),
       textEvidenceDone: j['textEvidenceDone'] as bool? ?? false,
-      photoEvidenceDone: j['photoEvidenceDone'] as bool? ?? false,
       audioEvidenceDone: j['audioEvidenceDone'] as bool? ?? false,
       lastErrorMessage: j['lastErrorMessage'] as String?,
     );

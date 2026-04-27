@@ -3,6 +3,15 @@ import '../domain/incident.dart';
 import 'incident_dto.dart';
 import 'incidents_api.dart';
 
+/// Un archivo de imagen a enviar como evidencia tipo `foto`.
+class ReportPhotoItem {
+  const ReportPhotoItem({required this.bytes, required this.mime, required this.filename});
+
+  final List<int> bytes;
+  final String mime;
+  final String filename;
+}
+
 /// Payload armado en el wizard antes de enviar.
 class ReportSubmitPayload {
   ReportSubmitPayload({
@@ -10,9 +19,7 @@ class ReportSubmitPayload {
     required this.latitud,
     required this.longitud,
     this.descripcionTexto,
-    this.photoBytes,
-    this.photoMimeType,
-    this.photoFilename,
+    this.photos = const [],
     this.audioBytes,
     this.audioMimeType,
     this.audioFilename,
@@ -23,9 +30,7 @@ class ReportSubmitPayload {
   final double latitud;
   final double longitud;
   final String? descripcionTexto;
-  final List<int>? photoBytes;
-  final String? photoMimeType;
-  final String? photoFilename;
+  final List<ReportPhotoItem> photos;
   final List<int>? audioBytes;
   final String? audioMimeType;
   final String? audioFilename;
@@ -35,8 +40,15 @@ class ReportSubmitPayload {
   static const int maxExtraTextEvidenceChars = 10000;
   static const int maxPhotoBytes = 5 * 1024 * 1024;
   static const int maxAudioBytes = 15 * 1024 * 1024;
+  static const int maxPhotosPerReport = 8;
 
-  static const Set<String> allowedPhotoMimes = {'image/jpeg', 'image/png', 'image/webp'};
+  static const Set<String> allowedPhotoMimes = {
+    'image/jpeg',
+    'image/jpg',
+    'image/pjpeg',
+    'image/png',
+    'image/webp',
+  };
   static const Set<String> allowedAudioMimes = {
     'audio/mpeg',
     'audio/mp4',
@@ -52,15 +64,19 @@ class ReportSubmitPayload {
     if (extraTextEvidence != null && extraTextEvidence!.length > maxExtraTextEvidenceChars) {
       return 'El texto de evidencia es demasiado largo.';
     }
-    if (photoBytes != null) {
-      if (photoMimeType == null || !allowedPhotoMimes.contains(photoMimeType)) {
-        return 'Formato de imagen no permitido (usá JPEG, PNG o WEBP).';
+    if (photos.length > maxPhotosPerReport) {
+      return 'Podés adjuntar como máximo $maxPhotosPerReport fotos en un mismo reporte.';
+    }
+    for (var i = 0; i < photos.length; i++) {
+      final p = photos[i];
+      if (!allowedPhotoMimes.contains(p.mime)) {
+        return 'Foto ${i + 1}: formato no permitido (usá JPEG, PNG o WEBP).';
       }
-      if (photoBytes!.length > maxPhotoBytes) {
-        return 'La imagen supera el tamaño máximo permitido (5 MB).';
+      if (p.bytes.length > maxPhotoBytes) {
+        return 'Foto ${i + 1}: supera 5 MB.';
       }
     }
-    if (audioBytes != null) {
+    if (audioBytes != null && audioBytes!.isNotEmpty) {
       if (audioMimeType == null || !allowedAudioMimes.contains(audioMimeType)) {
         return 'Formato de audio no permitido.';
       }
@@ -92,6 +108,8 @@ class IncidentsRepository {
 
   Future<IncidentDetail> cancelIncident(int id) => _api.cancelIncident(id);
   Future<void> deleteIncident(int id) => _api.deleteIncident(id);
+
+  Future<Map<String, dynamic>> getAssignmentCandidates(int id) => _api.getAssignmentCandidates(id);
 
   Future<IncidentDetail> markAsEnCamino(int id) => _api.markAsEnCamino(id);
 
@@ -170,19 +188,21 @@ class IncidentsRepository {
       );
     }
 
-    if (payload.photoBytes != null &&
-        payload.photoMimeType != null &&
-        payload.photoFilename != null &&
-        payload.photoBytes!.isNotEmpty) {
+    for (var i = 0; i < payload.photos.length; i++) {
+      final p = payload.photos[i];
+      final n = i + 1;
+      if (p.bytes.isEmpty) {
+        continue;
+      }
       await runEvidence(
-        'Foto',
+        'Foto $n',
         () async {
           await _api.addEvidenceFile(
             incidenteId: created.id,
             tipo: 'foto',
-            bytes: payload.photoBytes!,
-            filename: payload.photoFilename!,
-            mimeType: payload.photoMimeType!,
+            bytes: p.bytes,
+            filename: p.filename,
+            mimeType: p.mime,
           );
         },
       );

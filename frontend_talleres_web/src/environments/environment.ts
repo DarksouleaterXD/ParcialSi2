@@ -1,6 +1,10 @@
+/**
+ * Build de producción (Vercel, `ng build`): si definís `NG_API_BASE_URL` en el proyecto
+ * Vercel, `scripts/vercel-env.cjs` reescribe este archivo al buildear (HTTPS del backend en Render).
+ * Sin esa variable, editá `apiUrl` a tu API pública y dejá `authMock: false` para usar FastAPI.
+ */
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8000/api',
-  /** true = login mock (sin backend). false = API real. */
-  authMock: true,
+  apiUrl: 'https://REEMPLAZA-por-tu-servicio.onrender.com/api',
+  authMock: false,
 };

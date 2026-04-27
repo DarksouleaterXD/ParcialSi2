@@ -34,6 +34,8 @@ export interface AssignmentScoreBreakdownDto {
 
 export interface AssignmentCandidateDto {
   taller_id: number;
+  /** Nombre comercial (enriquecido por API). */
+  taller_nombre?: string | null;
   tecnico_sugerido_id: number | null;
   rank: number;
   score_total: number;

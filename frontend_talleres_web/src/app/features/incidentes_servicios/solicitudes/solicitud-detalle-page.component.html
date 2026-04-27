@@ -229,7 +229,10 @@
                   @for (c of candidates(); track c.taller_id) {
                     <tr class="hover:bg-slate-50/80">
                       <td class="px-3 py-2 font-medium text-slate-900">{{ c.rank }}</td>
-                      <td class="px-3 py-2 text-slate-800">{{ c.taller_id }}</td>
+                      <td class="px-3 py-2 text-slate-800">
+                        <span class="font-medium">{{ c.taller_nombre || 'Taller' }}</span>
+                        <span class="ml-1 text-xs text-slate-500">#{{ c.taller_id }}</span>
+                      </td>
                       <td class="px-3 py-2 text-slate-600">{{ c.tecnico_sugerido_id ?? '—' }}</td>
                       <td class="px-3 py-2 font-mono text-xs text-slate-800">{{ c.score_total | number: '1.0-4' }}</td>
                       <td class="px-3 py-2 text-xs text-slate-600">{{ c.breakdown.prioridad | number: '1.0-2' }}</td>

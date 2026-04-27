@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "vercel:inject-api": "node scripts/vercel-env.cjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "check:tailwind-only": "node check-no-scss.js"

@@ -51,6 +51,11 @@ class IncidentsApi {
     await _client.delete('$_base/incidentes/$incidenteId');
   }
 
+  /// Motor 1.5.5: candidatos persistidos (tras IA completada).
+  Future<Map<String, dynamic>> getAssignmentCandidates(int incidenteId) async {
+    return _client.getJson('$_base/incidentes/$incidenteId/asignacion/candidatos');
+  }
+
   Future<IncidentDetail> markAsEnCamino(int incidenteId) async {
     final json = await _client.postJson(
       '$_base/incidentes/$incidenteId/en-camino',
@@ -110,11 +115,18 @@ class IncidentsApi {
     required String filename,
     required String mimeType,
   }) async {
+    var mt = mimeType.trim();
+    if (mt == 'image/jpg' || mt == 'image/pjpeg') {
+      mt = 'image/jpeg';
+    }
+    if (tipo == 'audio' && (mt == 'video/mp4' || mt == 'application/mp4')) {
+      mt = 'audio/mp4';
+    }
     final file = AuthorizedClient.fileField(
       fieldName: 'archivo',
       bytes: bytes,
       filename: filename,
-      mimeType: mimeType,
+      mimeType: mt,
     );
     return _client.postMultipart(
       '$_base/incidentes/$incidenteId/evidencias',

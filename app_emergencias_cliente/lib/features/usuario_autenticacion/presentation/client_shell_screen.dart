@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'dart:async' show StreamSubscription, unawaited;
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -21,6 +21,8 @@ import '../../incidentes_servicios/presentation/activity_tab.dart';
 import '../../incidentes_servicios/presentation/report_incident_screen.dart';
 import 'vehicle_form_screen.dart';
 import 'vehicles_list_tab.dart';
+import '../../sistema/data/notifications_api.dart';
+import '../../sistema/presentation/notifications_screen.dart';
 
 /// Shell principal: inicio, vehículos, actividad o asignados, perfil y barra flotante.
 class ClientShellScreen extends StatefulWidget {
@@ -48,6 +50,8 @@ class _ClientShellScreenState extends State<ClientShellScreen> {
 
   /// Pestaña inferior: `0` Inicio, `1` Vehículos, `3` Actividad, `4` Perfil. El FAB `+` es contextual.
   var _slot = 0;
+
+  int _unreadNotif = 0;
 
   int _stackIndex() {
     if (_slot <= 1) {
@@ -162,6 +166,7 @@ class _ClientShellScreenState extends State<ClientShellScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!widget.isTechnician) {
         unawaited(_trySyncPending(showSnack: false));
+        unawaited(_loadUnreadNotifications());
       }
     });
   }
@@ -216,6 +221,41 @@ class _ClientShellScreenState extends State<ClientShellScreen> {
     });
   }
 
+  Future<void> _loadUnreadNotifications() async {
+    if (widget.isTechnician) {
+      return;
+    }
+    try {
+      final c = await NotificationsApi(_authorized).unreadCount();
+      if (mounted) {
+        setState(() => _unreadNotif = c);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _unreadNotif = 0);
+      }
+    }
+  }
+
+  void _openNotifications() {
+    unawaited(
+      Navigator.of(context)
+          .push<void>(
+            MaterialPageRoute<void>(
+              builder: (_) => NotificationsScreen(
+                authorized: _authorized,
+                onSessionExpired: _goToLogin,
+              ),
+            ),
+          )
+          .then((_) {
+            if (mounted) {
+              unawaited(_loadUnreadNotifications());
+            }
+          }),
+    );
+  }
+
   Future<void> _openCreateVehicle() async {
     final ok = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -241,6 +281,20 @@ class _ClientShellScreenState extends State<ClientShellScreen> {
         centerTitle: false,
         automaticallyImplyLeading: false,
         actions: [
+          if (!widget.isTechnician)
+            IconButton(
+              tooltip: 'Notificaciones',
+              onPressed: _openNotifications,
+              icon: _unreadNotif > 0
+                  ? Badge(
+                      label: Text(
+                        _unreadNotif > 99 ? '99+' : '$_unreadNotif',
+                        style: const TextStyle(fontSize: 10),
+                      ),
+                      child: const Icon(Icons.notifications_outlined),
+                    )
+                  : const Icon(Icons.notifications_outlined),
+            ),
           if (!widget.isTechnician && pendingIncidentsGlobal.count > 0)
             IconButton(
               tooltip: 'Pendientes de envío',

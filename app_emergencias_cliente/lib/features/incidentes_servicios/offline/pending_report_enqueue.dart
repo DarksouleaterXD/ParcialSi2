@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../data/incidents_repository.dart';
 import 'pending_incident_draft.dart';
+import 'pending_photo_info.dart';
 import 'pending_incidents_store.dart';
 
 /// Copia adjuntos al almacenamiento de la app y persiste el borrador en Hive.
@@ -19,10 +20,17 @@ Future<PendingIncidentDraft> enqueuePendingReport({
   final dir = Directory('${root.path}/pending_incidents/$localId');
   await dir.create(recursive: true);
 
-  String? photoPath;
-  if (payload.photoBytes != null && payload.photoBytes!.isNotEmpty) {
-    photoPath = '${dir.path}/photo.bin';
-    await File(photoPath).writeAsBytes(payload.photoBytes!, flush: true);
+  final photoEntries = <PendingPhotoInfo>[];
+  for (var i = 0; i < payload.photos.length; i++) {
+    final p = payload.photos[i];
+    if (p.bytes.isEmpty) {
+      continue;
+    }
+    final path = '${dir.path}/photo_$i.bin';
+    await File(path).writeAsBytes(p.bytes, flush: true);
+    photoEntries.add(
+      PendingPhotoInfo(absPath: path, mime: p.mime, filename: p.filename, evidenceDone: false),
+    );
   }
 
   String? audioPath;
@@ -42,9 +50,7 @@ Future<PendingIncidentDraft> enqueuePendingReport({
     longitud: payload.longitud,
     descripcionTexto: payload.descripcionTexto,
     extraTextEvidence: payload.extraTextEvidence,
-    photoAbsPath: photoPath,
-    photoMimeType: payload.photoMimeType,
-    photoFilename: payload.photoFilename,
+    photos: photoEntries,
     audioAbsPath: audioPath,
     audioMimeType: payload.audioMimeType,
     audioFilename: payload.audioFilename,

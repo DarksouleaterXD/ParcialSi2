@@ -6,6 +6,7 @@ import '../data/incident_dto.dart';
 import '../data/incidents_api.dart';
 import '../data/incidents_repository.dart';
 import 'pending_incident_draft.dart';
+import 'pending_photo_info.dart';
 import 'pending_incidents_store.dart';
 
 /// Sincroniza borradores: misma `Idempotency-Key` en creación; evidencias idempotentes por huella en servidor.
@@ -94,13 +95,17 @@ class PendingIncidentSyncService {
         await _store.put(w);
       }
 
-      if (w.needsPhotoEvidence) {
-        final file = File(w.photoAbsPath!);
+      for (var i = 0; i < w.photos.length; i++) {
+        if (w.photos[i].evidenceDone) {
+          continue;
+        }
+        final p = w.photos[i];
+        final file = File(p.absPath);
         if (!await file.exists()) {
           await _store.put(
             w.copyWith(
-              lastErrorMessage:
-                  'No se encontró el archivo de foto guardado. Podés descartar el borrador.',
+              lastErrorMessage: 'Foto ${i + 1}: archivo guardado no encontrado. '
+                  'Podés descartar el borrador.',
             ),
           );
           return false;
@@ -108,7 +113,7 @@ class PendingIncidentSyncService {
         final bytes = await file.readAsBytes();
         if (bytes.length > ReportSubmitPayload.maxPhotoBytes) {
           await _store.put(
-            w.copyWith(lastErrorMessage: 'La foto guardada supera el tamaño máximo permitido.'),
+            w.copyWith(lastErrorMessage: 'Foto ${i + 1}: el archivo supera el tamaño permitido.'),
           );
           return false;
         }
@@ -116,10 +121,12 @@ class PendingIncidentSyncService {
           incidenteId: incidenteId,
           tipo: 'foto',
           bytes: bytes,
-          filename: w.photoFilename!,
-          mimeType: w.photoMimeType!,
+          filename: p.filename,
+          mimeType: p.mime,
         );
-        w = w.copyWith(photoEvidenceDone: true, clearLastError: true);
+        final newPhotos = List<PendingPhotoInfo>.from(w.photos);
+        newPhotos[i] = p.copyWith(evidenceDone: true);
+        w = w.copyWith(photos: newPhotos, clearLastError: true);
         await _store.put(w);
       }
 

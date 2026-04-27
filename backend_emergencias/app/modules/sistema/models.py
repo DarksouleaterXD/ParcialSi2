@@ -1,8 +1,7 @@
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
-from sqlalchemy.sql import func
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy.sql import expression, func
 
 from app.core.database import Base
-
 
 class Bitacora(Base):
     __tablename__ = "bitacora"
@@ -21,6 +20,31 @@ class TokenRevocado(Base):
 
     jti = Column(String(64), primary_key=True)
     expiracion = Column(DateTime, nullable=False)
+
+
+class Notificacion(Base):
+    __tablename__ = "notificacion"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_usuario = Column(Integer, ForeignKey("usuario.id", ondelete="CASCADE"), nullable=False)
+    titulo = Column(String(150), nullable=False)
+    mensaje = Column(Text, nullable=False)
+    tipo = Column(String(50), nullable=True)
+    leida = Column(Boolean, nullable=False, default=False, server_default=expression.false())
+    fechahora = Column("fechahora", DateTime, server_default=func.now())
+
+
+class NotificacionPushToken(Base):
+    """Token FCM/Web para notificaciones push (un usuario puede tener varios dispositivos)."""
+
+    __tablename__ = "notificacion_push_token"
+    __table_args__ = (UniqueConstraint("id_usuario", "token", name="uq_push_token_user_token"),)
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_usuario = Column(Integer, ForeignKey("usuario.id", ondelete="CASCADE"), nullable=False, index=True)
+    token = Column(String(512), nullable=False)
+    plataforma = Column(String(32), nullable=False)
+    fechacreacion = Column("fechacreacion", DateTime, server_default=func.now())
 
 
 class IdempotenciaRegistro(Base):

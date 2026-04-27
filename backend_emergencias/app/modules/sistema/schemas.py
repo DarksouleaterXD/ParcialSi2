@@ -42,3 +42,43 @@ class BitacoraDetailResponse(BaseModel):
     resultado: str | None
     fecha_hora: datetime | None
     usuario: BitacoraUsuarioRef
+
+
+# --- Notificaciones (CU-17) ---
+
+
+class NotificacionItem(BaseModel):
+    id: int
+    titulo: str
+    mensaje: str
+    leida: bool
+    tipo: str | None = None
+    fecha_hora: datetime | None = None
+
+
+class NotificacionListResponse(BaseModel):
+    items: list[NotificacionItem]
+    total: int
+    page: int
+    page_size: int
+
+
+class NoLeidasCount(BaseModel):
+    count: int
+
+
+class NotificacionPatch(BaseModel):
+    leida: bool = True
+
+
+class MarcarTodasLeidasResponse(BaseModel):
+    updated: int
+
+
+class PushTokenIn(BaseModel):
+    token: str
+    plataforma: str = "android"
+
+
+class PushTokenUnregisterIn(BaseModel):
+    token: str

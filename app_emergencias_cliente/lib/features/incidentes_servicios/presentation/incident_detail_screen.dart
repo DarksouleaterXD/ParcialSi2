@@ -52,6 +52,8 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   var _pagoBusy = false;
   String? _error;
   IncidentDetail? _detail;
+  /// Talleres candidatos (1.5.5) luego de IA `completed` en servidor.
+  List<Map<String, dynamic>>? _candidatosAsignacion;
 
   @override
   void initState() {
@@ -63,14 +65,36 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _candidatosAsignacion = null;
     });
     try {
       final d = await _api.getIncidentById(widget.incidenteId);
+      List<Map<String, dynamic>>? cands;
+      if (!widget.isTechnician && (d.aiStatus ?? '').toLowerCase() == 'completed') {
+        try {
+          final m = await _api.getAssignmentCandidates(widget.incidenteId);
+          final list = m['candidates'];
+          if (list is List) {
+            final out = <Map<String, dynamic>>[];
+            for (final e in list) {
+              if (e is Map) {
+                out.add(Map<String, dynamic>.from(e));
+              }
+            }
+            cands = out.isEmpty ? null : out;
+          }
+        } on ApiClientException {
+          cands = null;
+        } catch (_) {
+          cands = null;
+        }
+      }
       if (!mounted) {
         return;
       }
       setState(() {
         _detail = d;
+        _candidatosAsignacion = cands;
         _loading = false;
       });
     } on SessionExpiredException {
@@ -654,6 +678,12 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                           if (_showClienteIaCard(_detail!)) ...[
                             const SizedBox(height: AppSpacing.md),
                             _buildIaCard(context, _detail!),
+                          ],
+                          if (!widget.isTechnician &&
+                              _candidatosAsignacion != null &&
+                              _candidatosAsignacion!.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.md),
+                            _buildCandidatosAsignacionCard(context, _candidatosAsignacion!),
                           ],
                           if (widget.isTechnician) ...[
                             const SizedBox(height: AppSpacing.lg),
@@ -1276,6 +1306,85 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
               Text(
                 'Confianza: ${confJson.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Listado básico 1.5.5: prioridad/distancia/ETA aprox. (servidor).
+  Widget _buildCandidatosAsignacionCard(BuildContext context, List<Map<String, dynamic>> items) {
+    final scheme = Theme.of(context).colorScheme;
+    final take = items.length > 5 ? items.sublist(0, 5) : items;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Talleres sugeridos',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Orden por puntuación del motor (distancia, especialidad, prioridad, ETA aprox.). La asignación final la confirma el operador.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            for (final c in take) ...[
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: scheme.primaryContainer,
+                      child: Text(
+                        '${(c['rank'] as num?)?.toInt() ?? '—'}',
+                        style: TextStyle(
+                          color: scheme.onPrimaryContainer,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            (c['taller_nombre'] as String?)?.trim().isNotEmpty == true
+                                ? c['taller_nombre'] as String
+                                : 'Taller #${c['taller_id']}',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          if (c['distancia_km'] != null)
+                            Text(
+                              'Distancia ≈ ${(c['distancia_km'] as num).toStringAsFixed(1)} km',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            )
+                          else
+                            Text(
+                              'Score: ${(c['score_total'] as num?)?.toStringAsFixed(3) ?? '—'}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          if (c['eta_minutos_estimada'] != null)
+                            Text(
+                              'ETA aprox. ~ ${(c['eta_minutos_estimada'] as num).round()} min',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                  ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ],
