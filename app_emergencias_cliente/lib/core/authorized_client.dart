@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -23,15 +24,39 @@ class AuthorizedClient {
   final AuthStorage _storage;
   final http.Client _http;
 
-  Uri _uri(String path) => Uri.parse('$kApiBase$path');
+  static const Duration _kNetworkTimeout = Duration(seconds: 60);
+
+  String get _apiRoot => kApiBase;
+
+  Uri _uri(String path) => Uri.parse('$_apiRoot$path');
+
+  static String get _timeoutMsg =>
+      'Tiempo de espera agotado. En hosting gratuito (p. ej. Render) el primer acceso puede tardar ~1 min. Reintentá.';
 
   Future<http.Response> _send(Future<http.Response> Function() request) async {
     try {
-      return await request();
-    } on SocketException {
-      throw ApiClientException(statusCode: 0, message: 'No se pudo conectar con el servidor');
-    } on http.ClientException {
-      throw ApiClientException(statusCode: 0, message: 'No se pudo conectar con el servidor');
+      return await request().timeout(
+        _kNetworkTimeout,
+        onTimeout: () {
+          throw ApiClientException(statusCode: 0, message: _timeoutMsg);
+        },
+      );
+    } on ApiClientException {
+      rethrow;
+    } on SocketException catch (e) {
+      throw ApiClientException(
+        statusCode: 0,
+        message: 'Sin conexión o host inalcanzable. Revisá WiFi/datos. (${e.message})',
+      );
+    } on HandshakeException catch (e) {
+      throw ApiClientException(
+        statusCode: 0,
+        message: 'Conexión HTTPS fallida. Revisá la red. (${e.message})',
+      );
+    } on TlsException catch (e) {
+      throw ApiClientException(statusCode: 0, message: 'Error SSL. (${e.message})');
+    } on http.ClientException catch (e) {
+      throw ApiClientException(statusCode: 0, message: 'Error HTTP: ${e.message}');
     }
   }
 
@@ -72,12 +97,22 @@ class AuthorizedClient {
       ..files.addAll(files);
     late http.Response res;
     try {
-      final streamed = await _http.send(req);
+      final streamed = await _http.send(req).timeout(
+        _kNetworkTimeout,
+        onTimeout: () {
+          throw ApiClientException(statusCode: 0, message: _timeoutMsg);
+        },
+      );
       res = await http.Response.fromStream(streamed);
-    } on SocketException {
-      throw ApiClientException(statusCode: 0, message: 'No se pudo conectar con el servidor');
-    } on http.ClientException {
-      throw ApiClientException(statusCode: 0, message: 'No se pudo conectar con el servidor');
+    } on ApiClientException {
+      rethrow;
+    } on SocketException catch (e) {
+      throw ApiClientException(
+        statusCode: 0,
+        message: 'Sin conexión. (${e.message})',
+      );
+    } on http.ClientException catch (e) {
+      throw ApiClientException(statusCode: 0, message: 'Error HTTP: ${e.message}');
     }
     return _handleJson(res);
   }

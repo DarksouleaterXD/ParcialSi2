@@ -3,12 +3,12 @@ import '../domain/incident.dart';
 import 'incident_dto.dart';
 import 'incidents_api.dart';
 
-/// Un archivo de imagen a enviar como evidencia tipo `foto`.
-class ReportPhotoItem {
-  const ReportPhotoItem({required this.bytes, required this.mime, required this.filename});
+/// Foto de evidencia seleccionada (bytes + MIME + nombre de archivo para multipart).
+class PhotoItem {
+  const PhotoItem({required this.bytes, required this.mimeType, required this.filename});
 
   final List<int> bytes;
-  final String mime;
+  final String mimeType;
   final String filename;
 }
 
@@ -30,7 +30,7 @@ class ReportSubmitPayload {
   final double latitud;
   final double longitud;
   final String? descripcionTexto;
-  final List<ReportPhotoItem> photos;
+  final List<PhotoItem> photos;
   final List<int>? audioBytes;
   final String? audioMimeType;
   final String? audioFilename;
@@ -69,7 +69,7 @@ class ReportSubmitPayload {
     }
     for (var i = 0; i < photos.length; i++) {
       final p = photos[i];
-      if (!allowedPhotoMimes.contains(p.mime)) {
+      if (!allowedPhotoMimes.contains(p.mimeType)) {
         return 'Foto ${i + 1}: formato no permitido (usá JPEG, PNG o WEBP).';
       }
       if (p.bytes.length > maxPhotoBytes) {
@@ -145,6 +145,7 @@ class IncidentsRepository {
     return _api.createIncident(dto, idempotencyKey: idempotencyKey);
   }
 
+  /// Crea el incidente y sube evidencias: una petición multipart por cada [PhotoItem] en `payload.photos`.
   Future<SubmitIncidentOutcome> submitReport(
     ReportSubmitPayload payload, {
     required String incidentIdempotencyKey,
@@ -202,7 +203,7 @@ class IncidentsRepository {
             tipo: 'foto',
             bytes: p.bytes,
             filename: p.filename,
-            mimeType: p.mime,
+            mimeType: p.mimeType,
           );
         },
       );

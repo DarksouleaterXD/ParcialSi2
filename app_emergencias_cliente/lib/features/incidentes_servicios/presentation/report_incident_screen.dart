@@ -72,7 +72,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   final MapController _mapController = MapController();
   static const LatLng _fallbackCenter = LatLng(-17.7833, -63.1821);
 
-  final List<ReportPhotoItem> _photoItems = [];
+  final List<PhotoItem> _photoItems = [];
 
   List<int>? _audioBytes;
   String? _audioMime;
@@ -247,9 +247,9 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     }
     setState(() {
       _photoItems.add(
-        ReportPhotoItem(
+        PhotoItem(
           bytes: bytes,
-          mime: mime,
+          mimeType: mime,
           filename: _safeFileName(file.path, mime),
         ),
       );
@@ -591,7 +591,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       latitud: lat,
       longitud: lng,
       descripcionTexto: _desc.text.trim().isEmpty ? null : _desc.text.trim(),
-      photos: List<ReportPhotoItem>.from(_photoItems),
+      photos: List<PhotoItem>.from(_photoItems),
       audioBytes: _audioBytes,
       audioMimeType: _audioMime,
       audioFilename: _audioName,
@@ -998,7 +998,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                 ),
                 if (_extraText.text.trim().isNotEmpty)
                   _reviewRow('Nota adicional', _extraText.text.trim()),
-                _reviewRow('Evidencias', _evidenceReviewLine()),
+                _reviewRow('Evidencias', _evidenceReviewSummary()),
               ],
             ),
           ),
@@ -1007,15 +1007,18 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
     );
   }
 
-  String _evidenceReviewLine() {
-    final p = <String>[];
-    if (_photoItems.isNotEmpty) {
-      p.add(_photoItems.length == 1 ? '1 foto' : '${_photoItems.length} fotos');
+  /// Resumen del paso final: siempre muestra `Fotos (N)` y audio si aplica.
+  String _evidenceReviewSummary() {
+    final n = _photoItems.length;
+    final hasAudio = _audioBytes != null && _audioBytes!.isNotEmpty;
+    if (n == 0 && !hasAudio) {
+      return 'Ninguna';
     }
-    if (_audioBytes != null && _audioBytes!.isNotEmpty) {
-      p.add('Audio');
+    final parts = <String>['Fotos ($n)'];
+    if (hasAudio) {
+      parts.add('Audio');
     }
-    return p.join(' · ').ifEmpty('Ninguna');
+    return parts.join(' · ');
   }
 
   Widget _reviewRow(String k, String v) {
@@ -1038,8 +1041,4 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
       ),
     );
   }
-}
-
-extension on String {
-  String ifEmpty(String fallback) => isEmpty ? fallback : this;
 }

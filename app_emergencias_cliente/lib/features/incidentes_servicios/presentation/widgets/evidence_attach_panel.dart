@@ -231,7 +231,7 @@ class _EvidenceAttachPanelState extends State<EvidenceAttachPanel> with TickerPr
         if (w.photoCount > 0 || w.hasAudio) ...[
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Adjuntos',
+            w.photoCount > 0 ? 'Fotos (${w.photoCount})' : 'Adjuntos',
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,

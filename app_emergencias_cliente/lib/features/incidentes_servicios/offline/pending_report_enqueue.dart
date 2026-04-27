@@ -29,7 +29,7 @@ Future<PendingIncidentDraft> enqueuePendingReport({
     final path = '${dir.path}/photo_$i.bin';
     await File(path).writeAsBytes(p.bytes, flush: true);
     photoEntries.add(
-      PendingPhotoInfo(absPath: path, mime: p.mime, filename: p.filename, evidenceDone: false),
+      PendingPhotoInfo(absPath: path, mime: p.mimeType, filename: p.filename, evidenceDone: false),
     );
   }
 

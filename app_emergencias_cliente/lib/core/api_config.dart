@@ -1,16 +1,23 @@
+import 'package:flutter/foundation.dart';
+
 /// Base URL del API FastAPI (debe terminar en `/api`, sin barra final extra).
 ///
-/// - PC / Chrome: `http://localhost:8000/api`
-/// - Emulador Android: `http://10.0.2.2:8000/api`
-/// - **Teléfono físico (misma WiFi que el PC):** `http://<IP_LAN_DEL_PC>:8000/api`
-///   Ejemplo: `http://192.168.0.15:8000/api`. En Windows: `ipconfig` → IPv4.
+/// - **Release sin `--dart-define`:** usa [kDefaultReleaseApiBase] (producción en Render);
+///   cambiá esa constante si el deploy cambia o preferí compilar con `API_BASE`.
+/// - **Debug / profile sin variable:** `http://localhost:8000/api` (o emulador con `10.0.2.2`).
 ///
-/// Sobrescribir al ejecutar:
-/// `flutter run --dart-define=API_BASE=http://192.168.0.15:8000/api`
-///
-/// El backend debe escuchar en todas las interfaces, p. ej.:
-/// `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
-const String kApiBase = String.fromEnvironment(
-  'API_BASE',
-  defaultValue: 'http://localhost:8000/api',
-);
+/// Sobrescribir al ejecutar o al buildear APK:
+/// `flutter run --dart-define=API_BASE=https://parcialsi2.onrender.com/api`
+const String kDefaultReleaseApiBase = 'https://parcialsi2.onrender.com/api';
+
+/// Resuelve la URL: `API_BASE` (si se definió) > release por defecto > localhost en debug.
+String get kApiBase {
+  const fromEnv = String.fromEnvironment('API_BASE', defaultValue: '');
+  if (fromEnv.isNotEmpty) {
+    return fromEnv;
+  }
+  if (kReleaseMode) {
+    return kDefaultReleaseApiBase;
+  }
+  return 'http://localhost:8000/api';
+}

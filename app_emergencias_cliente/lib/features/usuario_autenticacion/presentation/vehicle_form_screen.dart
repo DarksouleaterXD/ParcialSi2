@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../core/authorized_client.dart' show ApiClientException, SessionExpiredException;
 import '../../../core/theme/app_spacing.dart';
-import '../../../core/widgets/app_dropdown_field.dart';
 import '../../../core/widgets/app_section_header.dart';
 import '../../../core/widgets/app_snackbar.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -23,16 +22,12 @@ class VehicleFormScreen extends StatefulWidget {
 }
 
 class _VehicleFormScreenState extends State<VehicleFormScreen> {
-  static const _seguroPresets = ['Terceros', 'Terceros completos', 'Todo riesgo', 'Otro'];
-
   final _formKey = GlobalKey<FormState>();
   final _placa = TextEditingController();
   final _marca = TextEditingController();
   final _modelo = TextEditingController();
   final _anio = TextEditingController();
   final _color = TextEditingController();
-  final _seguro = TextEditingController();
-  final _foto = TextEditingController();
   var _saving = false;
   String? _error;
 
@@ -41,35 +36,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
   var _loadingRemote = false;
 
   bool get _edit => widget.vehicle != null;
-
-  List<String> _orderedSeguroValues() {
-    final current = _seguro.text.trim();
-    final out = <String>['', ..._seguroPresets];
-    if (current.isNotEmpty && !out.contains(current)) {
-      out.add(current);
-    }
-    return out;
-  }
-
-  List<DropdownMenuItem<String>> _seguroItems() {
-    return _orderedSeguroValues()
-        .map(
-          (s) => DropdownMenuItem<String>(
-            value: s,
-            child: Text(
-              s.isEmpty ? 'Sin especificar' : s,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        )
-        .toList();
-  }
-
-  String _seguroDropdownValue() {
-    final v = _seguro.text.trim();
-    return _orderedSeguroValues().contains(v) ? v : '';
-  }
 
   @override
   void initState() {
@@ -89,8 +55,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
     _modelo.text = v.modelo;
     _anio.text = v.anio.toString();
     _color.text = v.color ?? '';
-    _seguro.text = v.tipoSeguro ?? '';
-    _foto.text = v.fotoFrontal ?? '';
   }
 
   Future<void> _refreshVehicleFromServer() async {
@@ -127,8 +91,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
     _modelo.dispose();
     _anio.dispose();
     _color.dispose();
-    _seguro.dispose();
-    _foto.dispose();
     super.dispose();
   }
 
@@ -186,16 +148,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
         if (color != prevC) {
           patch['color'] = color.isEmpty ? null : color;
         }
-        final seg = _seguro.text.trim();
-        final prevS = base.tipoSeguro ?? '';
-        if (seg != prevS) {
-          patch['tipo_seguro'] = seg.isEmpty ? null : seg;
-        }
-        final foto = _foto.text.trim();
-        final prevF = base.fotoFrontal ?? '';
-        if (foto != prevF) {
-          patch['foto_frontal'] = foto.isEmpty ? null : foto;
-        }
         if (patch.isEmpty) {
           if (mounted) {
             AppSnackBar.info(context, 'No hay cambios para guardar.');
@@ -211,8 +163,6 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
           'modelo': _modelo.text.trim(),
           'anio': int.parse(_anio.text.trim()),
           'color': _color.text.trim().isEmpty ? null : _color.text.trim(),
-          'tipo_seguro': _seguro.text.trim().isEmpty ? null : _seguro.text.trim(),
-          'foto_frontal': _foto.text.trim().isEmpty ? null : _foto.text.trim(),
         });
       }
       if (mounted) {
@@ -229,8 +179,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
       }
     } on ApiClientException catch (e) {
       setState(() => _error = e.message);
-    } catch (_) {
-      setState(() => _error = 'No se pudo conectar con el servidor');
+    } catch (e) {
+      setState(() => _error = 'Error inesperado: $e');
     } finally {
       if (mounted) {
         setState(() => _saving = false);
@@ -271,7 +221,7 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                             children: [
                               const AppSectionHeader(
                                 title: 'Datos del vehículo',
-                                subtitle: 'Los campos marcados son obligatorios para guardar.',
+                                subtitle: 'Placa, marca, modelo, año y color. Los marcados * son obligatorios.',
                               ),
                               const SizedBox(height: AppSpacing.md),
                               AppTextField(
@@ -307,23 +257,8 @@ class _VehicleFormScreenState extends State<VehicleFormScreen> {
                               const SizedBox(height: AppSpacing.sm),
                               AppTextField(
                                 controller: _color,
-                                label: 'Color',
+                                label: 'Color (opcional)',
                                 prefixIcon: Icons.palette_outlined,
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              AppDropdownField<String>(
-                                label: 'Tipo de seguro',
-                                helperText: 'Elegí una opción o dejá sin especificar.',
-                                value: _seguroDropdownValue(),
-                                items: _seguroItems(),
-                                onChanged: (val) => setState(() => _seguro.text = val ?? ''),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              AppTextField(
-                                controller: _foto,
-                                label: 'Foto frontal (URL)',
-                                prefixIcon: Icons.photo_outlined,
-                                keyboardType: TextInputType.url,
                               ),
                             ],
                           ),
