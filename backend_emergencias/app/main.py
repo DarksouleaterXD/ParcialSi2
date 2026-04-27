@@ -5,6 +5,8 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import engine
+from app.modules.incidentes_servicios.calificaciones_router import admin_router as admin_calificaciones_router
+from app.modules.incidentes_servicios.calificaciones_router import router as calificaciones_router
 from app.modules.incidentes_servicios.router import router as incidentes_router
 from app.modules.pagos.router import router as pagos_router
 from app.modules.sistema.notificaciones_api import notificaciones_router
@@ -32,6 +34,8 @@ app.include_router(bitacora_router, prefix="/api")
 app.include_router(taller_router, prefix="/api")
 app.include_router(admin_talleres_router, prefix="/api")
 app.include_router(incidentes_router, prefix="/api")
+app.include_router(calificaciones_router, prefix="/api")
+app.include_router(admin_calificaciones_router, prefix="/api")
 app.include_router(pagos_router, prefix="/api")
 
 # --- CORS: registrar este add_middleware al final del archivo ---

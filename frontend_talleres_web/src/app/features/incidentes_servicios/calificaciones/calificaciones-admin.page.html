@@ -1,0 +1,239 @@
+<div class="min-h-full bg-slate-50 p-6">
+  <div class="mx-auto max-w-7xl space-y-6">
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h1 class="text-2xl font-semibold text-slate-900">Calificaciones de servicios</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Consulta las valoraciones realizadas por los clientes sobre los servicios atendidos por talleres y técnicos.
+      </p>
+    </section>
+
+    <section class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Total de calificaciones</p>
+        <p class="mt-2 text-3xl font-bold text-slate-900">{{ total() }}</p>
+      </article>
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Promedio general</p>
+        <p class="mt-2 text-3xl font-bold text-slate-900">{{ avg() }}</p>
+      </article>
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Calificaciones 5 estrellas</p>
+        <p class="mt-2 text-3xl font-bold text-orange-600">{{ total5() }}</p>
+      </article>
+      <article class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Calificaciones bajas (1-2)</p>
+        <p class="mt-2 text-3xl font-bold text-slate-900">{{ totalLow() }}</p>
+      </article>
+    </section>
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <form [formGroup]="filtrosForm" (ngSubmit)="aplicarFiltros()" class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-cliente">Cliente</label>
+          <input id="f-cliente" type="text" formControlName="cliente" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-taller">Taller</label>
+          <input id="f-taller" type="text" formControlName="taller" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-tecnico">Técnico</label>
+          <input id="f-tecnico" type="text" formControlName="tecnico" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-puntuacion">Puntuación exacta</label>
+          <select id="f-puntuacion" formControlName="puntuacion" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500">
+            <option value="">Todas</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-pmin">Puntuación mínima</label>
+          <select id="f-pmin" formControlName="puntuacion_min" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500">
+            <option value="">-</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-pmax">Puntuación máxima</label>
+          <select id="f-pmax" formControlName="puntuacion_max" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500">
+            <option value="">-</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-desde">Fecha desde</label>
+          <input id="f-desde" type="date" formControlName="fecha_desde" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-hasta">Fecha hasta</label>
+          <input id="f-hasta" type="date" formControlName="fecha_hasta" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500" />
+        </div>
+        <div class="xl:col-span-2">
+          <label class="block text-xs font-medium text-slate-500 mb-1" for="f-estado">Estado del servicio</label>
+          <select id="f-estado" formControlName="estado_servicio" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-orange-500 focus:ring-2 focus:ring-orange-500">
+            @for (st of estadoOpciones; track st) {
+              <option [value]="st">{{ st || 'Todos' }}</option>
+            }
+          </select>
+        </div>
+        <div class="xl:col-span-2 flex items-end gap-2">
+          <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 focus:ring-2 focus:ring-orange-500">Buscar</button>
+          <button type="button" (click)="limpiarFiltros()" class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Limpiar filtros</button>
+        </div>
+      </form>
+    </section>
+
+    @if (error()) {
+      <section class="bg-white rounded-xl shadow-sm border border-red-200 p-6">
+        <p class="text-sm text-red-700">{{ error() }}</p>
+        <button type="button" (click)="buscar()" class="mt-3 inline-flex items-center justify-center rounded-xl border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50">Reintentar</button>
+      </section>
+    }
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      @if (loading()) {
+        <div class="p-6 space-y-3 animate-pulse">
+          @for (_ of [1,2,3,4,5]; track _) {
+            <div class="h-10 rounded-lg bg-slate-100"></div>
+          }
+        </div>
+      } @else if (empty()) {
+        <div class="p-10 text-center text-sm text-slate-500">
+          No se encontraron calificaciones con los filtros seleccionados.
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="min-w-[1200px] w-full text-left text-sm">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-xs">
+              <tr>
+                <th class="px-4 py-3">Fecha</th>
+                <th class="px-4 py-3">Cliente</th>
+                <th class="px-4 py-3">Taller</th>
+                <th class="px-4 py-3">Técnico</th>
+                <th class="px-4 py-3">Servicio / Incidente</th>
+                <th class="px-4 py-3">Estado servicio</th>
+                <th class="px-4 py-3">Puntuación</th>
+                <th class="px-4 py-3">Comentario</th>
+                <th class="px-4 py-3">Monto pagado</th>
+                <th class="px-4 py-3">Estado pago</th>
+                <th class="px-4 py-3">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of items(); track item.id) {
+                <tr class="border-t border-slate-100 align-top">
+                  <td class="px-4 py-3 text-slate-700">{{ item.fecha ? (item.fecha | date:'dd/MM/yyyy HH:mm') : '—' }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ item.cliente.nombre }} {{ item.cliente.apellido }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ item.taller?.nombre || '—' }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ item.tecnico ? (item.tecnico.nombre + ' ' + item.tecnico.apellido) : '—' }}</td>
+                  <td class="px-4 py-3 text-slate-700">Srv #{{ item.servicio_id }} / Inc #{{ item.incidente_id }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ item.servicio?.estado || item.incidente?.estado || '—' }}</td>
+                  <td class="px-4 py-3 text-slate-700">
+                    <span class="font-semibold">{{ item.puntuacion }}</span>
+                    <span class="ml-2 text-amber-500">{{ stars(item.puntuacion) }}</span>
+                  </td>
+                  <td class="px-4 py-3 text-slate-700 max-w-sm">{{ item.comentario || 'Sin comentario' }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ item.pago ? ('$ ' + item.pago.monto_total.toFixed(2)) : '—' }}</td>
+                  <td class="px-4 py-3 text-slate-700">{{ item.pago?.estado || '—' }}</td>
+                  <td class="px-4 py-3">
+                    <button type="button" (click)="openDetail(item)" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50">Ver detalle</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </section>
+
+    <section class="flex items-center justify-between">
+      <button type="button" (click)="prev()" [disabled]="!hasPrev()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">Anterior</button>
+      <p class="text-sm text-slate-600">Página {{ page() }}</p>
+      <button type="button" (click)="next()" [disabled]="!hasNext()" class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
+    </section>
+  </div>
+</div>
+
+@if (selected(); as detail) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+    <div class="w-full max-w-3xl bg-white rounded-xl shadow-lg border border-slate-200">
+      <div class="flex items-center justify-between border-b border-slate-200 p-4">
+        <h3 class="text-lg font-semibold text-slate-900">Detalle de calificación #{{ detail.id }}</h3>
+        <button type="button" (click)="closeDetail()" class="rounded-lg border border-slate-300 px-3 py-1 text-sm text-slate-600 hover:bg-slate-50">Cerrar</button>
+      </div>
+      <div class="p-6">
+        @if (detailLoading()) {
+          <div class="space-y-3 animate-pulse">
+            <div class="h-6 w-1/2 rounded bg-slate-100"></div>
+            <div class="h-5 w-full rounded bg-slate-100"></div>
+            <div class="h-5 w-full rounded bg-slate-100"></div>
+            <div class="h-5 w-3/4 rounded bg-slate-100"></div>
+          </div>
+        } @else if (detailError()) {
+          <p class="text-sm text-red-700">{{ detailError() }}</p>
+        } @else {
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 text-sm">
+            <div class="space-y-2">
+              <p class="text-slate-500">Cliente</p>
+              <p class="font-medium text-slate-900">{{ detail.cliente.nombre }} {{ detail.cliente.apellido }}</p>
+              <p class="text-slate-700">{{ detail.cliente.email || 'Sin email' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Taller</p>
+              <p class="font-medium text-slate-900">{{ detail.taller?.nombre || '—' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Técnico</p>
+              <p class="font-medium text-slate-900">{{ detail.tecnico ? (detail.tecnico.nombre + ' ' + detail.tecnico.apellido) : '—' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Puntuación</p>
+              <p class="font-medium text-slate-900">{{ detail.puntuacion }} <span class="text-amber-500">{{ stars(detail.puntuacion) }}</span></p>
+            </div>
+            <div class="space-y-2 md:col-span-2">
+              <p class="text-slate-500">Comentario</p>
+              <p class="text-slate-900">{{ detail.comentario || 'Sin comentario' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Fecha</p>
+              <p class="text-slate-900">{{ detail.fecha ? (detail.fecha | date:'dd/MM/yyyy HH:mm') : '—' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Servicio / Incidente</p>
+              <p class="text-slate-900">Srv #{{ detail.servicio_id }} / Inc #{{ detail.incidente_id }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Estado servicio</p>
+              <p class="text-slate-900">{{ detail.servicio?.estado || detail.incidente?.estado || '—' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Pago asociado</p>
+              <p class="text-slate-900">{{ detail.pago ? ('#' + detail.pago.id) : 'No asociado' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Monto pagado</p>
+              <p class="text-slate-900">{{ detail.pago ? ('$ ' + detail.pago.monto_total.toFixed(2)) : '—' }}</p>
+            </div>
+            <div class="space-y-2">
+              <p class="text-slate-500">Estado del pago</p>
+              <p class="text-slate-900">{{ detail.pago?.estado || '—' }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

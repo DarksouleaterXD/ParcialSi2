@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/auth_api.dart';
 import '../../../core/auth_storage.dart';
+import '../../../core/authorized_client.dart';
+import '../../../core/push_messaging_init.dart' show unregisterPushTokenOnLogout;
 import 'login_screen.dart';
 
 /// Best-effort [POST /auth/logout] with Bearer token, always clears [AuthStorage], then shows [LoginScreen] as the only route.
@@ -13,8 +15,10 @@ Future<void> logoutAndNavigateToLogin({
   required AuthApi authApi,
 }) async {
   final token = await storage.readToken();
+  final preLogout = AuthorizedClient(storage: storage);
   try {
     if (token != null && token.isNotEmpty) {
+      await unregisterPushTokenOnLogout(preLogout);
       await authApi.logout(token);
     }
   } finally {

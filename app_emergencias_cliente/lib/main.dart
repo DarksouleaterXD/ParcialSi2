@@ -1,10 +1,13 @@
 import 'package:app_emergencias_cliente/features/incidentes_servicios/offline/pending_incidents_store.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/auth_api.dart';
 import 'core/auth_storage.dart';
+import 'core/push_messaging_init.dart' show initializePushMessaging, firebaseMessagingBackgroundHandler;
 import 'core/theme/app_spacing.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/app_empty_state.dart';
@@ -12,9 +15,28 @@ import 'core/widgets/primary_button.dart';
 import 'features/usuario_autenticacion/presentation/client_shell_screen.dart';
 import 'features/usuario_autenticacion/presentation/login_screen.dart';
 
+/// Raíz de navegación (snack de FCM en primer plano).
+final GlobalKey<NavigatorState> kAppNavigatorKey = GlobalKey<NavigatorState>();
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  Stripe.publishableKey = const String.fromEnvironment('STRIPE_PUB_KEY', defaultValue: '');
+  const stripePubKey = String.fromEnvironment('STRIPE_PUB_KEY', defaultValue: '');
+  Stripe.publishableKey = stripePubKey;
+  if (stripePubKey.isNotEmpty) {
+    await Stripe.instance.applySettings();
+  } else if (kDebugMode) {
+    debugPrint('Stripe disabled: STRIPE_PUB_KEY no definido.');
+  }
+  if (!kIsWeb && (defaultTargetPlatform == TargetPlatform.android)) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    try {
+      await initializePushMessaging(navigatorKey: kAppNavigatorKey);
+    } on Object catch (e) {
+      if (kDebugMode) {
+        debugPrint('FCM init: $e');
+      }
+    }
+  }
   await Hive.initFlutter();
   await Hive.openBox<String>(kPendingIncidentsHiveBox);
   runApp(const EmergenciasApp());
@@ -30,6 +52,7 @@ class EmergenciasApp extends StatelessWidget {
     return MaterialApp(
       title: 'Emergencias Cliente',
       theme: AppTheme.light(),
+      navigatorKey: kAppNavigatorKey,
       home: _SessionGate(storage: storage, api: api),
     );
   }

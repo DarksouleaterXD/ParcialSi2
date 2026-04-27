@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import '../../../core/auth_api.dart';
 import '../../../core/auth_storage.dart';
 import '../../../core/authorized_client.dart';
+import '../../../core/push_messaging_init.dart' show registerPushTokenWithBackend;
 import '../../../core/widgets/floating_pill_nav_bar.dart';
 import '../../../core/widgets/quick_actions_sheet.dart';
 import '../data/profile_api.dart';
@@ -164,6 +165,7 @@ class _ClientShellScreenState extends State<ClientShellScreen> {
     super.initState();
     _connectivitySub = Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(registerPushTokenWithBackend(_authorized));
       if (!widget.isTechnician) {
         unawaited(_trySyncPending(showSnack: false));
         unawaited(_loadUnreadNotifications());

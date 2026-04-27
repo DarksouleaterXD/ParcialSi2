@@ -17,16 +17,24 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("incidente", sa.Column("ai_result_json", sa.Text(), nullable=True))
-    op.add_column("incidente", sa.Column("ai_confidence", sa.Numeric(5, 2), nullable=True))
-    op.add_column("incidente", sa.Column("ai_status", sa.String(length=32), nullable=True))
-    op.add_column("incidente", sa.Column("ai_provider", sa.String(length=64), nullable=True))
-    op.add_column("incidente", sa.Column("ai_model", sa.String(length=128), nullable=True))
-    op.add_column("incidente", sa.Column("prompt_version", sa.String(length=32), nullable=True))
-    op.add_column("incidente", sa.Column("assignment_trace_json", sa.Text(), nullable=True))
-
     conn = op.get_bind()
     insp = sa.inspect(conn)
+    if not insp.has_table("incidente"):
+        return
+    inc_cols = {c["name"] for c in insp.get_columns("incidente")}
+    add = [
+        ("ai_result_json", sa.Column("ai_result_json", sa.Text(), nullable=True)),
+        ("ai_confidence", sa.Column("ai_confidence", sa.Numeric(5, 2), nullable=True)),
+        ("ai_status", sa.Column("ai_status", sa.String(length=32), nullable=True)),
+        ("ai_provider", sa.Column("ai_provider", sa.String(length=64), nullable=True)),
+        ("ai_model", sa.Column("ai_model", sa.String(length=128), nullable=True)),
+        ("prompt_version", sa.Column("prompt_version", sa.String(length=32), nullable=True)),
+        ("assignment_trace_json", sa.Column("assignment_trace_json", sa.Text(), nullable=True)),
+    ]
+    for name, col in add:
+        if name not in inc_cols:
+            op.add_column("incidente", col)
+
     if not insp.has_table("incidente_taller_candidato"):
         op.create_table(
             "incidente_taller_candidato",
@@ -53,6 +61,9 @@ def downgrade() -> None:
     if insp.has_table("incidente_taller_candidato"):
         op.drop_index("ix_incidente_taller_candidato_incidente", table_name="incidente_taller_candidato")
         op.drop_table("incidente_taller_candidato")
+    if not insp.has_table("incidente"):
+        return
+    inc_cols = {c["name"] for c in insp.get_columns("incidente")}
     for col in (
         "assignment_trace_json",
         "prompt_version",
@@ -62,4 +73,5 @@ def downgrade() -> None:
         "ai_confidence",
         "ai_result_json",
     ):
-        op.drop_column("incidente", col)
+        if col in inc_cols:
+            op.drop_column("incidente", col)

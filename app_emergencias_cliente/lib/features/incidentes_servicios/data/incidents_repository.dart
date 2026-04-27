@@ -126,16 +126,29 @@ class IncidentsRepository {
     return _api.markAsFinalizado(id, body: body);
   }
 
-  Future<void> calificarIncidente(String id, int puntuacion, String comentario) async {
-    final parsedId = int.tryParse(id);
-    if (parsedId == null || parsedId < 1) {
+  Future<void> calificarIncidente(int incidenteId, int puntuacion, String comentario) async {
+    if (incidenteId < 1) {
       throw ApiClientException(statusCode: 422, message: 'ID de incidente inválido.');
     }
-    await _api.calificarIncidente(
-      parsedId,
-      puntuacion: puntuacion,
-      comentario: comentario.trim(),
-    );
+    try {
+      final json = await _api.calificarIncidente(
+        incidenteId,
+        puntuacion: puntuacion,
+        comentario: comentario.trim(),
+      );
+      // Debug temporal solicitado.
+      // ignore: avoid_print
+      print('CALIFICACION STATUS: 201/200');
+      // ignore: avoid_print
+      print('CALIFICACION RESPONSE: $json');
+    } on ApiClientException catch (e) {
+      // Debug temporal solicitado.
+      // ignore: avoid_print
+      print('CALIFICACION STATUS: ${e.statusCode}');
+      // ignore: avoid_print
+      print('CALIFICACION RESPONSE: ${e.message}');
+      rethrow;
+    }
   }
 
   Future<IncidentSummary> createIncidentOnly(

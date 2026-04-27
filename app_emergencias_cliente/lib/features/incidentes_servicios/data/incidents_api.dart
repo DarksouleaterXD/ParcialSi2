@@ -85,12 +85,18 @@ class IncidentsApi {
     required int puntuacion,
     String? comentario,
   }) {
+    final body = <String, dynamic>{
+      'puntuacion': puntuacion,
+      if (comentario != null && comentario.trim().isNotEmpty) 'comentario': comentario.trim(),
+    };
+    // Debug temporal solicitado.
+    // ignore: avoid_print
+    print('CALIFICACION URL: $_base/$incidenteId/calificacion');
+    // ignore: avoid_print
+    print('CALIFICACION BODY: $body');
     return _client.postJson(
-      '$_base/incidentes/$incidenteId/calificar',
-      body: <String, dynamic>{
-        'puntuacion': puntuacion,
-        if (comentario != null && comentario.trim().isNotEmpty) 'comentario': comentario.trim(),
-      },
+      '$_base/$incidenteId/calificacion',
+      body: body,
     );
   }
 

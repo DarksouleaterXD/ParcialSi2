@@ -50,6 +50,8 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
   var _loading = true;
   var _servicioProgresoBusy = false;
   var _pagoBusy = false;
+  double? _montoPago;
+  String _monedaPago = 'USD';
   String? _error;
   IncidentDetail? _detail;
   /// Talleres candidatos (1.5.5) luego de IA `completed` en servidor.
@@ -338,7 +340,6 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
   static const Color _successGreen = Color(0xFF16A34A);
   static const Color _accentOrange = Color(0xFFF97316);
-  static const double _montoPagoMvp = 15000.0;
 
   String _estadoNormalizado(String estado) => estado.trim().toLowerCase().replaceAll(' ', '_');
 
@@ -498,17 +499,37 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
     if (!mounted || _pagoBusy) {
       return;
     }
+    final detail = _detail;
+    if (detail == null) {
+      return;
+    }
+    if (!_isEstadoFinalizado(detail.estado)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Solo podés pagar cuando el servicio está finalizado.')),
+      );
+      return;
+    }
+    if (Stripe.publishableKey.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Stripe no está configurado en esta app. Recompilá con STRIPE_PUB_KEY.'),
+        ),
+      );
+      return;
+    }
     setState(() {
       _pagoBusy = true;
     });
 
     final messenger = ScaffoldMessenger.of(context);
     try {
-      final clientSecret = await _pagosRepo.createPaymentIntent(widget.incidenteId);
+      final intent = await _pagosRepo.createPaymentIntent(widget.incidenteId);
+      final montoIntent = intent.montoTotal;
+      final currency = intent.currency;
 
       await Stripe.instance.initPaymentSheet(
         paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
+          paymentIntentClientSecret: intent.clientSecret,
           merchantDisplayName: 'Taller Inteligente',
         ),
       );
@@ -516,7 +537,13 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
       await Stripe.instance.presentPaymentSheet();
 
       // If it reaches here, payment was successful. Notify backend.
-      await _pagosRepo.procesarPago(widget.incidenteId, _montoPagoMvp, metodoPago: 'TARJETA');
+      await _pagosRepo.procesarPago(widget.incidenteId, montoIntent, metodoPago: 'TARJETA');
+      if (mounted) {
+        setState(() {
+          _montoPago = montoIntent;
+          _monedaPago = currency;
+        });
+      }
       await _load();
 
       if (mounted) {
@@ -897,6 +924,8 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
 
   Widget _buildPagoPendienteCard(BuildContext context, IncidentDetail d) {
     final scheme = Theme.of(context).colorScheme;
+    final monto = _montoPago;
+    final montoLabel = monto == null ? 'Se calcula al iniciar el pago' : '${_monedaPago.toUpperCase()} ${monto.toStringAsFixed(2)}';
     return Card(
       color: const Color(0xFFFFF7ED),
       child: Padding(
@@ -937,7 +966,7 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                 border: Border.all(color: const Color(0xFFF97316).withValues(alpha: 0.35)),
               ),
               child: Text(
-                'Monto a pagar: \$${_montoPagoMvp.toStringAsFixed(2)}',
+                'Monto a pagar: $montoLabel',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF9A3412),

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Siempre cargar .env desde la raíz de backend_emergencias (no depende del cwd de uvicorn).
@@ -53,6 +54,19 @@ class Settings(BaseSettings):
 
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _normalize_postgres_url(cls, v: object) -> object:
+        """Render/Neon suelen entregar `postgres://` o `postgresql://` sin driver; SQLAlchemy+psycopg2 requiere el prefijo explícito."""
+        if not isinstance(v, str):
+            return v
+        u = v.strip()
+        if u.startswith("postgres://"):
+            return "postgresql+psycopg2://" + u[len("postgres://") :]
+        if u.startswith("postgresql://") and "+psycopg" not in u[:30]:
+            return "postgresql+psycopg2://" + u[len("postgresql://") :]
+        return u
 
 
 settings = Settings()

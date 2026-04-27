@@ -28,4 +28,15 @@ class NotificationsApi {
     final json = await _client.postJson('$_base/marcar-todas-leidas', body: <String, dynamic>{});
     return (json['updated'] as num?)?.toInt() ?? 0;
   }
+
+  Future<void> registerPushToken(String token, {String plataforma = 'android'}) async {
+    await _client.postJson(
+      '$_base/push-token',
+      body: <String, dynamic>{'token': token, 'plataforma': plataforma},
+    );
+  }
+
+  Future<void> unregisterPushToken(String token) async {
+    await _client.postJson('$_base/push-token/desregistrar', body: <String, dynamic>{'token': token});
+  }
 }

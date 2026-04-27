@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
+import logging
+from decimal import Decimal, ROUND_HALF_UP
 
 import stripe
-from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import HTTPException, status, Request
 from sqlalchemy import func, select
@@ -23,6 +24,7 @@ from app.modules.sistema.bitacora_service import (
 from app.modules.usuario_autenticacion.models import Usuario
 
 stripe.api_key = settings.stripe_secret_key
+logger = logging.getLogger(__name__)
 
 
 def _rol_nombre_normalizado(rol: object) -> str:
@@ -208,19 +210,26 @@ def crear_payment_intent(db: Session, current_user: Usuario, incidente_id: int) 
     if existing is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Ya existe un pago para este incidente.")
 
+    # MVP: monto fijo hasta integrar tarifa real por incidente.
     monto_total = Decimal("50.00")
+    moneda = "usd"
     try:
         intent = stripe.PaymentIntent.create(
             amount=int(monto_total * 100),
-            currency="usd",
+            currency=moneda,
             metadata={"incidente_id": str(incidente_id)},
         )
-        return {"client_secret": intent.client_secret, "monto_total": float(monto_total)}
-    except stripe.error.StripeError:
+        return {
+            "client_secret": intent.client_secret,
+            "monto_total": float(monto_total),
+            "currency": moneda,
+        }
+    except stripe.error.StripeError as exc:
+        logger.exception("Stripe create-payment-intent failed for incidente_id=%s", incidente_id)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="No se pudo crear el pago en Stripe.",
-        )
+        ) from exc
 
 
 async def procesar_webhook(request: Request, db: Session) -> dict:

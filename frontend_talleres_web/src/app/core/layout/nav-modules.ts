@@ -70,6 +70,13 @@ export const SHELL_NAV_MODULES: ShellNavModule[] = [
         icon: 'bolt',
         routerLinkActiveOptions: { exact: false },
       },
+      {
+        routerLink: ['/', 'incidentes', 'calificaciones'],
+        label: 'Calificaciones',
+        icon: 'list',
+        adminOnly: true,
+        routerLinkActiveOptions: { exact: true },
+      },
     ],
   },
   {

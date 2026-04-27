@@ -86,6 +86,14 @@ export const routes: Routes = [
                 (m) => m.SolicitudDetallePageComponent,
               ),
           },
+          {
+            path: 'calificaciones',
+            canActivate: [adminGuard],
+            loadComponent: () =>
+              import('./features/incidentes_servicios/calificaciones/calificaciones-admin.page').then(
+                (m) => m.CalificacionesAdminPage,
+              ),
+          },
         ],
       },
     ],

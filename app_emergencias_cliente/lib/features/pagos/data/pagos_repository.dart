@@ -5,7 +5,7 @@ class PagosRepository {
 
   final PagosApi _api;
 
-  Future<String> createPaymentIntent(int incidenteId) {
+  Future<PaymentIntentData> createPaymentIntent(int incidenteId) {
     return _api.createPaymentIntent(incidenteId);
   }
 

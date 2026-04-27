@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "814315192816",
+    "project_id": "parcialsi2-fab5f",
+    "storage_bucket": "parcialsi2-fab5f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:814315192816:android:b0959a622b70142f085d35",
+        "android_client_info": {
+          "package_name": "com.example.app_emergencias_cliente"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIgzIUooZ0adXKgPL3q-YOCqFhheqvdJQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
