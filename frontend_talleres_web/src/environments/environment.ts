@@ -5,6 +5,6 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://parcialsi2.onrender.com/api',
+  apiUrl: 'https://last-dance-backend.onrender.com/api',
   authMock: false,
 };
