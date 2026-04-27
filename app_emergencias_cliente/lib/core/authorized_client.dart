@@ -216,7 +216,16 @@ class AuthorizedClient {
     }
 
     if (res.statusCode >= 400) {
-      final msg = messageFromResponseBody(decoded, fallback: _defaultForStatus(res.statusCode));
+      var msg = messageFromResponseBody(decoded, fallback: '');
+      if (msg.isEmpty && raw.isNotEmpty) {
+        final trimmed = raw.trim();
+        if (trimmed.length < 400 && !trimmed.startsWith('<')) {
+          msg = trimmed;
+        }
+      }
+      if (msg.isEmpty) {
+        msg = _defaultForStatus(res.statusCode);
+      }
       throw ApiClientException(statusCode: res.statusCode, message: msg);
     }
 

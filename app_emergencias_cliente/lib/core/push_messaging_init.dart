@@ -45,18 +45,32 @@ Future<void> initializePushMessaging({required GlobalKey<NavigatorState> navigat
 }
 
 void _showForegroundSnack(RemoteMessage m, GlobalKey<NavigatorState> key) {
-  final ctx = key.currentContext;
-  if (ctx == null || !ctx.mounted) {
-    return;
-  }
   final title = m.notification?.title;
-  final body = m.notification?.body ?? m.data['body']?.toString();
+  final body = m.notification?.body ?? m.data['body']?.toString() ?? m.data['mensaje']?.toString();
   if (body == null && title == null) {
     return;
   }
-  final line = [if (title != null && title.isNotEmpty) title, if (body != null) body]
+  final line = [if (title != null && title.isNotEmpty) title, if (body != null && body.isNotEmpty) body]
       .join(' — ');
-  ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(SnackBar(content: Text(line)));
+  if (line.isEmpty) {
+    return;
+  }
+
+  var delivered = false;
+  void tryShow() {
+    if (delivered) {
+      return;
+    }
+    final ctx = key.currentContext;
+    if (ctx == null || !ctx.mounted) {
+      return;
+    }
+    delivered = true;
+    ScaffoldMessenger.maybeOf(ctx)?.showSnackBar(SnackBar(content: Text(line)));
+  }
+
+  tryShow();
+  Future<void>.delayed(const Duration(milliseconds: 450), tryShow);
 }
 
 StreamSubscription<String>? _tokenRefreshSub;

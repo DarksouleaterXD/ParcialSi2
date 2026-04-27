@@ -4,7 +4,9 @@ import logging
 from datetime import date, datetime, time
 
 from fastapi import HTTPException, status
+from pydantic import ValidationError
 from sqlalchemy import case, func, or_, select
+from sqlalchemy.exc import IntegrityError, ProgrammingError
 from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.modules.incidentes_servicios.calificaciones_schemas import (
@@ -55,6 +57,12 @@ def _ilike_fragment_escaped(raw: str) -> str:
     return f"%{escaped}%"
 
 
+def _txt(v: object | None) -> str:
+    if v is None:
+        return ""
+    return str(v).strip()
+
+
 def _build_calificacion_item(
     *,
     cal: Calificacion,
@@ -65,32 +73,44 @@ def _build_calificacion_item(
     tecnico_taller: Taller | None,
 ) -> CalificacionItemResponse:
     servicio_id = inc.id
+    monto_val = 0.0
+    if pago is not None and pago.monto_total is not None:
+        monto_val = float(pago.monto_total)
+    pago_estado = _txt(pago.estado) if pago is not None else ""
     return CalificacionItemResponse(
-        id=cal.id,
+        id=int(cal.id),
         servicio_id=servicio_id,
         incidente_id=inc.id,
-        puntuacion=cal.puntuacion,
+        puntuacion=int(cal.puntuacion),
         comentario=cal.comentario,
         fecha=cal.fecha,
         cliente=ClienteRef(
-            id=cli.id,
-            nombre=cli.nombre,
-            apellido=cli.apellido,
+            id=int(cli.id),
+            nombre=_txt(cli.nombre) or "—",
+            apellido=_txt(cli.apellido) or "—",
             email=cli.email,
         ),
-        taller=TallerRef(id=tecnico_taller.id, nombre=tecnico_taller.nombre) if tecnico_taller is not None else None,
+        taller=(
+            TallerRef(id=int(tecnico_taller.id), nombre=_txt(tecnico_taller.nombre) or "—")
+            if tecnico_taller is not None
+            else None
+        ),
         tecnico=(
-            TecnicoRef(id=tecnico_user.id, nombre=tecnico_user.nombre, apellido=tecnico_user.apellido)
+            TecnicoRef(
+                id=int(tecnico_user.id),
+                nombre=_txt(tecnico_user.nombre) or "—",
+                apellido=_txt(tecnico_user.apellido) or "—",
+            )
             if tecnico_user is not None
             else None
         ),
-        servicio=ServicioRef(id=servicio_id, estado=inc.estado or ""),
-        incidente=IncidenteRef(id=inc.id, estado=inc.estado or "", tipo=inc.categoria_ia),
+        servicio=ServicioRef(id=servicio_id, estado=_txt(inc.estado)),
+        incidente=IncidenteRef(id=inc.id, estado=_txt(inc.estado), tipo=inc.categoria_ia),
         pago=(
             PagoRef(
-                id=pago.id,
-                monto_total=float(pago.monto_total),
-                estado=pago.estado,
+                id=int(pago.id),
+                monto_total=monto_val,
+                estado=pago_estado or "—",
             )
             if pago is not None
             else None
@@ -162,19 +182,41 @@ def create_calificacion_for_cliente(
         ip=client_ip,
         resultado=f"OK iid={incidente_id} pts={body.puntuacion}"[:50],
     )
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        logger.exception("Calificacion integrity error (duplicate or FK)")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="No se pudo guardar la calificación (conflicto en base de datos).",
+        ) from None
+    except ProgrammingError as exc:
+        db.rollback()
+        logger.exception("Calificacion programming error (schema mismatch?)")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="El servidor no tiene el esquema de calificaciones aplicado. Ejecutá las migraciones Alembic en la base de datos.",
+        ) from exc
     db.refresh(row)
 
     tecnico_ids = {inc.tecnico_id} if inc.tecnico_id is not None else set()
     tech_map, taller_map = _get_tecnico_context(db, tecnico_ids)
-    return _build_calificacion_item(
-        cal=row,
-        inc=inc,
-        cli=current_user,
-        pago=pago,
-        tecnico_user=tech_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
-        tecnico_taller=taller_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
-    )
+    try:
+        return _build_calificacion_item(
+            cal=row,
+            inc=inc,
+            cli=current_user,
+            pago=pago,
+            tecnico_user=tech_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
+            tecnico_taller=taller_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
+        )
+    except ValidationError:
+        logger.exception("CalificacionItemResponse validation failed")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="La calificación se guardó pero hubo un error al armar la respuesta. Recargá el incidente.",
+        ) from None
 
 
 def list_calificaciones_mias(

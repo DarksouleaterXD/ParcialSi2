@@ -7,6 +7,16 @@ String messageFromResponseBody(Object? decodedBody, {String fallback = 'Ocurrió
   if (detail is String) {
     return detail;
   }
+  if (detail is Map) {
+    final msg = detail['message'];
+    if (msg is String && msg.isNotEmpty) {
+      return msg;
+    }
+    final err = detail['error'];
+    if (err is String && err.isNotEmpty) {
+      return err;
+    }
+  }
   if (detail is List) {
     final parts = <String>[];
     for (final item in detail) {
