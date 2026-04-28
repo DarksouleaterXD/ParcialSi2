@@ -1,3 +1,8 @@
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -5,6 +10,37 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import engine
+
+logger = logging.getLogger(__name__)
+
+
+def _run_alembic_upgrade_head() -> None:
+    """Ejecuta migraciones contra `settings.database_url` (misma URL que el engine)."""
+    from alembic import command
+    from alembic.config import Config
+
+    backend_root = Path(__file__).resolve().parents[1]
+    ini_path = backend_root / "alembic.ini"
+    if not ini_path.is_file():
+        logger.warning("alembic.ini no encontrado en %s; omitiendo migraciones", ini_path)
+        return
+    cfg = Config(str(ini_path))
+    cfg.set_main_option("script_location", str(backend_root / "alembic"))
+    command.upgrade(cfg, "head")
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    if settings.run_db_migrations_on_startup:
+        try:
+            await asyncio.to_thread(_run_alembic_upgrade_head)
+            logger.info("Migraciones DB: alembic upgrade head OK")
+        except Exception:
+            logger.exception("Migraciones DB fallaron al arranque")
+            raise
+    yield
+
+
 from app.modules.incidentes_servicios.calificaciones_router import admin_router as admin_calificaciones_router
 from app.modules.incidentes_servicios.calificaciones_router import router as calificaciones_router
 from app.modules.incidentes_servicios.router import router as incidentes_router
@@ -22,7 +58,7 @@ from app.modules.pagos import models as _pagos_models  # noqa: F401
 from app.modules.sistema import models as _sistema_models  # noqa: F401
 from app.modules.taller_tecnico import models as _taller_models  # noqa: F401
 
-app = FastAPI(title="Emergencias API", version="0.1.0")
+app = FastAPI(title="Emergencias API", version="0.1.0", lifespan=_lifespan)
 
 app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")

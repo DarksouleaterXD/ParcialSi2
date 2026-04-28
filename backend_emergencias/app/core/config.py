@@ -62,6 +62,10 @@ class Settings(BaseSettings):
     firebase_credentials_json: str = ""
     firebase_credentials_path: str = ""
 
+    # Si es true, al arrancar ejecuta `alembic upgrade head` (Render free sin shell / varias Neon).
+    # En producción grande preferís CI o release command; acá sirve para despliegues académicos.
+    run_db_migrations_on_startup: bool = False
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalize_postgres_url(cls, v: object) -> object:
