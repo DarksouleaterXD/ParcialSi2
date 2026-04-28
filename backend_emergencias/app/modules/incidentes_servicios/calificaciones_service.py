@@ -31,7 +31,19 @@ from app.modules.usuario_autenticacion.models import Usuario, Vehiculo
 logger = logging.getLogger(__name__)
 
 _ESTADOS_CALIFICABLES = frozenset({"finalizado", "pagado", "completado", "cerrado", "resuelto"})
-_PAGO_OK = frozenset({"pagado", "confirmado", "completado", "paid", "succeeded"})
+_PAGO_OK = frozenset(
+    {
+        "pagado",
+        "confirmado",
+        "completado",
+        "paid",
+        "succeeded",
+        "complete",
+        "completed",
+        "exitoso",
+        "exitosa",
+    },
+)
 
 
 def _rol_nombre_normalizado(rol: object) -> str:
@@ -88,7 +100,7 @@ def _build_calificacion_item(
             id=int(cli.id),
             nombre=_txt(cli.nombre) or "—",
             apellido=_txt(cli.apellido) or "—",
-            email=cli.email,
+            email=_txt(cli.email) or None,
         ),
         taller=(
             TallerRef(id=int(tecnico_taller.id), nombre=_txt(tecnico_taller.nombre) or "—")
@@ -105,7 +117,11 @@ def _build_calificacion_item(
             else None
         ),
         servicio=ServicioRef(id=servicio_id, estado=_txt(inc.estado)),
-        incidente=IncidenteRef(id=inc.id, estado=_txt(inc.estado), tipo=inc.categoria_ia),
+        incidente=IncidenteRef(
+            id=inc.id,
+            estado=_txt(inc.estado),
+            tipo=(_txt(inc.categoria_ia) or None),
+        ),
         pago=(
             PagoRef(
                 id=int(pago.id),
@@ -139,6 +155,32 @@ def _get_tecnico_context(
 
 
 def create_calificacion_for_cliente(
+    db: Session,
+    *,
+    incidente_id: int,
+    body: CalificacionCreateRequest,
+    current_user: Usuario,
+    client_ip: str | None,
+) -> CalificacionItemResponse:
+    try:
+        return _create_calificacion_for_cliente_impl(
+            db,
+            incidente_id=incidente_id,
+            body=body,
+            current_user=current_user,
+            client_ip=client_ip,
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        logger.exception("Error inesperado al crear calificación (incidente_id=%s)", incidente_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo registrar la calificación. Intentá de nuevo en unos segundos.",
+        ) from None
+
+
+def _create_calificacion_for_cliente_impl(
     db: Session,
     *,
     incidente_id: int,

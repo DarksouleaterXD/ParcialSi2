@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     # Google Gemini (multimodal). Sin GOOGLE_AI_API_KEY => fallback local determinístico.
     google_ai_api_key: str = ""
     google_ai_model: str = "gemini-2.0-flash"
+    # Modelos de respaldo separados por coma (p. ej. cuota agotada en el principal). Vacío => cadena por defecto en código.
+    google_ai_models_extra: str = ""
     ai_confidence_threshold: float = 0.55
     ai_request_timeout_seconds: float = 60.0
     ai_prompt_version: str = "v1"

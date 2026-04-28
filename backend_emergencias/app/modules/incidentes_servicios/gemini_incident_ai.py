@@ -19,6 +19,34 @@ from app.modules.incidentes_servicios.ai_dataset_few_shot import build_few_shot_
 
 logger = logging.getLogger(__name__)
 
+# Modelos de respaldo si el principal agota cuota (ResourceExhausted) o falla.
+_DEFAULT_GEMINI_FALLBACKS: tuple[str, ...] = (
+    "gemini-2.0-flash-lite",
+    "gemini-1.5-flash-8b",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+)
+
+
+def _gemini_model_chain() -> list[str]:
+    primary = (settings.google_ai_model or "gemini-2.0-flash").strip()
+    extra = [x.strip() for x in (settings.google_ai_models_extra or "").split(",") if x.strip()]
+    seen: set[str] = set()
+    out: list[str] = []
+    for m in (primary, *extra, *_DEFAULT_GEMINI_FALLBACKS):
+        if m and m not in seen:
+            seen.add(m)
+            out.append(m)
+    return out
+
+
+def _is_quota_or_resource_error(exc: BaseException) -> bool:
+    name = type(exc).__name__
+    if "ResourceExhausted" in name or "QuotaFailure" in name:
+        return True
+    msg = str(exc).lower()
+    return "429" in msg or "resource exhausted" in msg or "quota" in msg or "rate limit" in msg
+
 _JSON_INSTRUCTION = """
 Analizá un incidente vehicular de emergencia. Respondé SOLO un JSON válido (sin markdown) con exactamente estas claves:
 {
@@ -128,14 +156,7 @@ def analyze_with_google(
         return r, "local_fallback", "heuristic-v1"
 
     genai.configure(api_key=settings.google_ai_api_key)
-    model_name = (settings.google_ai_model or "gemini-2.0-flash").strip()
-    model = genai.GenerativeModel(
-        model_name,
-        generation_config={
-            "response_mime_type": "application/json",
-            "temperature": 0.2,
-        },
-    )
+    model_chain = _gemini_model_chain()
 
     few_text, ref_images = build_few_shot_blocks()
     parts: list[Any] = []
@@ -173,27 +194,42 @@ def analyze_with_google(
     timeout_s = float(settings.ai_request_timeout_seconds or 60.0)
     executor = ThreadPoolExecutor(max_workers=1)
     try:
-        for attempt in range(3):
-            try:
-                fut = executor.submit(model.generate_content, parts)
+        for model_name in model_chain:
+            model = genai.GenerativeModel(
+                model_name,
+                generation_config={
+                    "response_mime_type": "application/json",
+                    "temperature": 0.2,
+                },
+            )
+            for attempt in range(3):
                 try:
-                    resp = fut.result(timeout=timeout_s)
-                except FutureTimeout as exc:
-                    fut.cancel()
-                    raise TimeoutError(f"Gemini timeout ({timeout_s:.0f}s)") from exc
-                raw_text = (resp.text or "").strip()
-                data = _parse_model_json(raw_text)
-                if not isinstance(data, dict):
-                    raise ValueError("IA: JSON no es un objeto")
-                r = _to_ai_result(data)
-                return (r, "google_gemini", model_name)
-            except BaseException as exc:
-                last_err = exc
-                logger.warning("Gemini intento %s falló: %s", attempt + 1, exc)
-                time.sleep(0.4 * (2**attempt))
+                    fut = executor.submit(model.generate_content, parts)
+                    try:
+                        resp = fut.result(timeout=timeout_s)
+                    except FutureTimeout as exc:
+                        fut.cancel()
+                        raise TimeoutError(f"Gemini timeout ({timeout_s:.0f}s)") from exc
+                    raw_text = (resp.text or "").strip()
+                    data = _parse_model_json(raw_text)
+                    if not isinstance(data, dict):
+                        raise ValueError("IA: JSON no es un objeto")
+                    r = _to_ai_result(data)
+                    return (r, "google_gemini", model_name)
+                except BaseException as exc:
+                    last_err = exc
+                    if _is_quota_or_resource_error(exc):
+                        logger.warning(
+                            "Gemini cuota/límite en modelo %s: %s — probando otro modelo",
+                            model_name,
+                            exc,
+                        )
+                        break
+                    logger.warning("Gemini modelo=%s intento=%s falló: %s", model_name, attempt + 1, exc)
+                    time.sleep(min(6.0, 0.45 * (2**attempt)))
     finally:
         executor.shutdown(wait=False, cancel_futures=True)
     assert last_err is not None
-    logger.error("Gemini: agotados reintentos, usando heurística local. Último error: %s", last_err)
+    logger.error("Gemini: agotados modelos y reintentos, usando heurística local. Último error: %s", last_err)
     r = _fallback_local_result(descripcion_sanitizada, has_audio=has_audio, has_photo=has_photo)
     return (r, "local_fallback", f"gemini-failed:{type(last_err).__name__}")
