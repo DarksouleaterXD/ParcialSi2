@@ -41,6 +41,7 @@ async def _lifespan(app: FastAPI):
     yield
 
 
+from app.modules.incidentes_servicios.ai_analysis_router import router as ia_analysis_router
 from app.modules.incidentes_servicios.calificaciones_router import admin_router as admin_calificaciones_router
 from app.modules.incidentes_servicios.calificaciones_router import router as calificaciones_router
 from app.modules.incidentes_servicios.router import router as incidentes_router
@@ -70,6 +71,7 @@ app.include_router(bitacora_router, prefix="/api")
 app.include_router(taller_router, prefix="/api")
 app.include_router(admin_talleres_router, prefix="/api")
 app.include_router(incidentes_router, prefix="/api")
+app.include_router(ia_analysis_router, prefix="/api")
 app.include_router(calificaciones_router, prefix="/api")
 app.include_router(admin_calificaciones_router, prefix="/api")
 app.include_router(pagos_router, prefix="/api")

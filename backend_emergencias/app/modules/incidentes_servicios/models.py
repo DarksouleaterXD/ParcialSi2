@@ -1,6 +1,6 @@
 """Modelos de incidentes, evidencias y asignación a técnico."""
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -36,6 +36,12 @@ class Incidente(Base):
         "AsignacionServicio",
         back_populates="incidente",
         lazy="selectin",
+        cascade="all, delete-orphan",
+    )
+    analisis_ia = relationship(
+        "AnalisisIncidenteIa",
+        back_populates="incidente",
+        lazy="dynamic",
         cascade="all, delete-orphan",
     )
 
@@ -95,6 +101,32 @@ class Calificacion(Base):
     fecha = Column(DateTime, server_default=func.now(), nullable=False)
 
     asignacion = relationship("AsignacionServicio", back_populates="calificacion")
+
+
+class AnalisisIncidenteIa(Base):
+    """Historial de análisis estructurado (Gemini) por incidente."""
+
+    __tablename__ = "analisis_incidente_ia"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_incidente = Column(Integer, ForeignKey("incidente.id", ondelete="CASCADE"), nullable=False)
+    tipo_incidente = Column(String(64), nullable=False)
+    prioridad = Column(String(32), nullable=False)
+    especialidad_requerida = Column(String(64), nullable=False)
+    resumen_cliente = Column(Text, nullable=True)
+    resumen_taller = Column(Text, nullable=True)
+    recomendaciones_inmediatas = Column(JSON, nullable=False)
+    riesgos_detectados = Column(JSON, nullable=False)
+    confianza = Column(Numeric(6, 4), nullable=False)
+    requiere_grua = Column(Boolean, nullable=False, default=False)
+    requiere_atencion_inmediata = Column(Boolean, nullable=False, default=False)
+    modelo_usado = Column(String(128), nullable=True)
+    raw_response = Column(JSON, nullable=True)
+    fecha = Column(DateTime, server_default=func.now(), nullable=False)
+    estado = Column(String(32), nullable=True)
+    error = Column(Text, nullable=True)
+
+    incidente = relationship("Incidente", back_populates="analisis_ia")
 
 
 class IncidenteTallerCandidato(Base):
