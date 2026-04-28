@@ -55,6 +55,11 @@ class Settings(BaseSettings):
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
 
+    # FCM (Firebase Admin): JSON completo de la cuenta de servicio (pegar en Render como secreto)
+    # o ruta local al archivo .json. Vacío => las push no se envían (solo notificación in-app).
+    firebase_credentials_json: str = ""
+    firebase_credentials_path: str = ""
+
     @field_validator("database_url", mode="before")
     @classmethod
     def _normalize_postgres_url(cls, v: object) -> object:

@@ -67,6 +67,7 @@ from app.modules.sistema.bitacora_service import (
     AUDIT_MODULE_SISTEMA,
     registrar_bitacora,
 )
+from app.modules.sistema.fcm_push_service import try_send_push_for_incident
 from app.modules.sistema.notificaciones_in_app_service import insertar_notificacion_por_incidente
 from app.modules.sistema.idempotencia_service import (
     evidence_payload_fingerprint,
@@ -826,6 +827,12 @@ def aceptar_solicitud(
         resultado=f"OK iid={incidente_id} tid={target_tecnico_id}"[:50],
     )
     db.commit()
+    try_send_push_for_incident(
+        db,
+        incidente_id,
+        titulo="Solicitud asignada",
+        mensaje=f"Un técnico aceptó tu emergencia (solicitud #{incidente_id}).",
+    )
     return get_incident_detail(db, user, incidente_id)
 
 
@@ -1009,6 +1016,12 @@ def marcar_en_camino(
         resultado=f"OK iid={incidente_id}"[:50],
     )
     db.commit()
+    try_send_push_for_incident(
+        db,
+        incidente_id,
+        titulo="Ayuda en camino",
+        mensaje=f"El técnico va hacia tu ubicación (solicitud #{incidente_id}).",
+    )
     db.refresh(inc)
     return _to_incident_response(db, inc)
 
@@ -1044,6 +1057,12 @@ def marcar_en_proceso(
         resultado=f"OK iid={incidente_id}"[:50],
     )
     db.commit()
+    try_send_push_for_incident(
+        db,
+        incidente_id,
+        titulo="Servicio en curso",
+        mensaje=f"El técnico está atendiendo tu vehículo (solicitud #{incidente_id}).",
+    )
     db.refresh(inc)
     return _to_incident_response(db, inc)
 
@@ -1087,6 +1106,12 @@ def finalizar_servicio(
         resultado=resultado,
     )
     db.commit()
+    try_send_push_for_incident(
+        db,
+        incidente_id,
+        titulo="Servicio finalizado",
+        mensaje=f"El servicio fue cerrado. Podés calificar la atención (solicitud #{incidente_id}).",
+    )
     db.refresh(inc)
     return _to_incident_response(db, inc)
 
@@ -1318,6 +1343,12 @@ def confirm_assignment_endpoint(
         resultado=f"OK iid={incidente_id} tid={tid}"[:50],
     )
     db.commit()
+    try_send_push_for_incident(
+        db,
+        incidente_id,
+        titulo="Solicitud asignada",
+        mensaje=f"Se asignó un técnico a tu emergencia (solicitud #{incidente_id}).",
+    )
     return get_incident_detail(db, user, incidente_id)
 
 
@@ -1369,4 +1400,10 @@ def override_assignment_endpoint(
         resultado=f"OK iid={incidente_id} tid={body.tecnico_id}"[:50],
     )
     db.commit()
+    try_send_push_for_incident(
+        db,
+        incidente_id,
+        titulo="Solicitud asignada",
+        mensaje=f"Se asignó un técnico a tu emergencia (solicitud #{incidente_id}).",
+    )
     return get_incident_detail(db, user, incidente_id)
