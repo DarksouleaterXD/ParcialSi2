@@ -73,6 +73,11 @@ class Settings(BaseSettings):
         if not isinstance(v, str):
             return v
         u = v.strip()
+        # Render/Vercel: a veces se pega la URL entre comillas y entran en el valor.
+        if len(u) >= 2 and u[0] == '"' and u[-1] == '"':
+            u = u[1:-1].strip()
+        if len(u) >= 2 and u[0] == "'" and u[-1] == "'":
+            u = u[1:-1].strip()
         if u.startswith("postgres://"):
             return "postgresql+psycopg2://" + u[len("postgres://") :]
         if u.startswith("postgresql://") and "+psycopg" not in u[:30]:

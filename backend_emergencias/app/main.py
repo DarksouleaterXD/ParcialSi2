@@ -122,11 +122,29 @@ def health() -> dict[str, str]:
 
 @app.get("/health/db")
 def health_db():
-    """Comprueba que DATABASE_URL llega a PostgreSQL (SELECT 1)."""
+    """Conexión a Postgres + diagnóstico de esquema (tabla `calificacion`, revisión Alembic)."""
     try:
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
-        return {"database": "connected"}
+            cal_exists = bool(
+                conn.execute(
+                    text(
+                        "SELECT EXISTS (SELECT 1 FROM information_schema.tables "
+                        "WHERE table_schema = 'public' AND table_name = 'calificacion')"
+                    )
+                ).scalar()
+            )
+            alembic_rev: str | None = None
+            try:
+                alembic_rev = conn.execute(text("SELECT version_num FROM alembic_version LIMIT 1")).scalar()
+            except Exception:
+                alembic_rev = None
+        return {
+            "database": "connected",
+            "calificacion_table_exists": cal_exists,
+            "alembic_version": alembic_rev,
+            "run_db_migrations_on_startup": settings.run_db_migrations_on_startup,
+        }
     except Exception as exc:  # noqa: BLE001
         return JSONResponse(
             status_code=503,

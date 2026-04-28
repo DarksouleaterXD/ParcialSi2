@@ -177,12 +177,17 @@ def create_calificacion_for_cliente(
             "Calificación: error SQL (tabla/columna ausente?). incidente_id=%s",
             incidente_id,
         )
+        hint = (getattr(exc, "orig", None) or exc)
+        hint_s = str(hint).strip()
+        if len(hint_s) > 350:
+            hint_s = hint_s[:350] + "…"
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=(
-                "La base de datos no tiene aplicada la tabla de calificaciones. "
-                "En el servidor (Render) ejecutá migraciones: `alembic upgrade head` "
-                "(incluye la revisión 007_calificacion_incidente)."
+                "Error al acceder a la tabla de calificaciones en la base de datos. "
+                "Revisá GET /health/db (calificacion_table_exists) y en Render: "
+                "`RUN_DB_MIGRATIONS_ON_STARTUP=true` o `alembic upgrade head` con la misma DATABASE_URL. "
+                f"Detalle: {hint_s}"
             ),
         ) from exc
     except Exception:
