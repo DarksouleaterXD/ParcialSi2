@@ -1,10 +1,11 @@
 import uuid
+from datetime import datetime
 
+from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
-from app.modules.incidentes_servicios.models import Incidente
-from app.modules.pagos.models import Pago
+from app.modules.incidentes_servicios.models import AsignacionServicio, Calificacion, Incidente
 from app.modules.usuario_autenticacion.models import Vehiculo
 
 
@@ -18,7 +19,13 @@ def _hdr(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
-def _create_incidente(*, estado: str, id_usuario_vehiculo: int = 2) -> int:
+def _create_incidente(
+    *,
+    estado: str,
+    id_usuario_vehiculo: int = 2,
+    with_asignacion: bool = True,
+    asignacion_finalizada: bool = True,
+) -> int:
     engine = app.state.test_engine
     Session = sessionmaker(bind=engine)
     db = Session()
@@ -41,6 +48,16 @@ def _create_incidente(*, estado: str, id_usuario_vehiculo: int = 2) -> int:
             tecnico_id=3,
         )
         db.add(inc)
+        db.flush()
+        if with_asignacion:
+            asi = AsignacionServicio(
+                id_incidente=inc.id,
+                id_taller=1,
+                id_mecanico=3,
+                estado="Finalizado" if asignacion_finalizada else "Asignado",
+                fecha_fin=datetime.utcnow() if asignacion_finalizada else None,
+            )
+            db.add(asi)
         db.commit()
         db.refresh(inc)
         return inc.id
@@ -48,25 +65,25 @@ def _create_incidente(*, estado: str, id_usuario_vehiculo: int = 2) -> int:
         db.close()
 
 
-def _create_pago(*, incidente_id: int, estado: str) -> int:
-    engine = app.state.test_engine
-    Session = sessionmaker(bind=engine)
+def test_calificacion_persiste_id_asignacion(client):
+    token = _login(client, "cliente-test@example.com")
+    iid = _create_incidente(estado="Finalizado")
+    res = client.post(
+        f"/api/incidentes-servicios/{iid}/calificacion",
+        headers=_hdr(token),
+        json={"puntuacion": 5},
+    )
+    assert res.status_code == 200
+    data = res.json()
+    aid = data["id_asignacion"]
+    cid = data["id"]
+    Session = sessionmaker(bind=app.state.test_engine)
     db = Session()
     try:
-        p = Pago(
-            incidente_id=incidente_id,
-            cliente_id=2,
-            tecnico_id=3,
-            monto_total=100,
-            monto_taller=90,
-            comision_plataforma=10,
-            metodo_pago="TARJETA",
-            estado=estado,
-        )
-        db.add(p)
-        db.commit()
-        db.refresh(p)
-        return p.id
+        cal = db.execute(select(Calificacion).where(Calificacion.id == cid)).scalar_one()
+        assert cal.id_asignacion == aid
+        asi = db.get(AsignacionServicio, aid)
+        assert asi is not None and asi.id_incidente == iid
     finally:
         db.close()
 
@@ -84,6 +101,8 @@ def test_calificar_finalizado_ok(client):
     assert data["puntuacion"] == 5
     assert data["comentario"] == "Excelente"
     assert data["incidente_id"] == iid
+    assert "id_asignacion" in data and data["id_asignacion"] >= 1
+    assert data["mensaje"]
     assert data["cliente"]["id"] == 2
     assert data["tecnico"]["id"] == 3
     assert data["taller"]["nombre"] == "Taller Test"
@@ -91,13 +110,26 @@ def test_calificar_finalizado_ok(client):
 
 def test_calificar_servicio_no_finalizado_400(client):
     token = _login(client, "cliente-test@example.com")
-    iid = _create_incidente(estado="Pendiente")
+    iid = _create_incidente(estado="Finalizado", asignacion_finalizada=False)
     res = client.post(
         f"/api/incidentes-servicios/{iid}/calificacion",
         headers=_hdr(token),
         json={"puntuacion": 3},
     )
     assert res.status_code == 400
+    assert "finalizado" in (res.json().get("detail") or "").lower()
+
+
+def test_calificar_sin_asignacion_400(client):
+    token = _login(client, "cliente-test@example.com")
+    iid = _create_incidente(estado="Finalizado", with_asignacion=False)
+    res = client.post(
+        f"/api/incidentes-servicios/{iid}/calificacion",
+        headers=_hdr(token),
+        json={"puntuacion": 4},
+    )
+    assert res.status_code == 400
+    assert "asignación" in (res.json().get("detail") or "").lower()
 
 
 def test_calificar_duplicado_409(client):
@@ -115,6 +147,7 @@ def test_calificar_duplicado_409(client):
         json={"puntuacion": 2},
     )
     assert r2.status_code == 409
+    assert "calificado" in (r2.json().get("detail") or "").lower()
 
 
 def test_calificar_servicio_de_otro_cliente_403(client):
@@ -137,18 +170,6 @@ def test_calificar_tecnico_403(client):
         json={"puntuacion": 5},
     )
     assert res.status_code == 403
-
-
-def test_calificar_si_pago_no_confirmado_400(client):
-    token = _login(client, "cliente-test@example.com")
-    iid = _create_incidente(estado="Finalizado")
-    _create_pago(incidente_id=iid, estado="PENDIENTE")
-    res = client.post(
-        f"/api/incidentes-servicios/{iid}/calificacion",
-        headers=_hdr(token),
-        json={"puntuacion": 5},
-    )
-    assert res.status_code == 400
 
 
 def test_calificar_rango_puntuacion_422(client):

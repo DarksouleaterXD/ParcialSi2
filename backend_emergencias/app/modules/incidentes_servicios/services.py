@@ -22,7 +22,9 @@ from app.modules.incidentes_servicios.constants import (
     ESTADO_PENDIENTE_IA,
     ESTADO_REVISION_MANUAL,
 )
-from app.modules.incidentes_servicios.models import Calificacion, Evidencia, Incidente, IncidenteTallerCandidato
+from app.modules.incidentes_servicios.calificaciones_schemas import CalificacionCreateRequest
+from app.modules.incidentes_servicios.calificaciones_service import create_calificacion_for_cliente
+from app.modules.incidentes_servicios.models import AsignacionServicio, Evidencia, Incidente, IncidenteTallerCandidato
 from app.modules.incidentes_servicios.schemas import (
     EvidenceCreateResponse,
     CalificacionCreate,
@@ -55,7 +57,6 @@ from app.modules.sistema.bitacora_service import (
     AUDIT_ACTION_INCIDENTE_ACEPTADO,
     AUDIT_ACTION_INCIDENTE_AI_ENRICHED,
     AUDIT_ACTION_INCIDENTE_AI_FAILED,
-    AUDIT_ACTION_INCIDENTE_CALIFICADO,
     AUDIT_ACTION_INCIDENTE_CANCELADO_CLIENTE,
     AUDIT_ACTION_INCIDENTE_ELIMINADO_CLIENTE,
     AUDIT_ACTION_INCIDENTE_CREATE,
@@ -1084,6 +1085,14 @@ def finalizar_servicio(
             detail="Solo se puede finalizar un incidente en estado En Proceso.",
         )
     inc.estado = _ESTADO_FINALIZADO
+    asi_fin = db.scalars(
+        select(AsignacionServicio)
+        .where(AsignacionServicio.id_incidente == incidente_id)
+        .order_by(AsignacionServicio.id.desc()),
+    ).first()
+    if asi_fin is not None:
+        asi_fin.fecha_fin = datetime.utcnow()
+        asi_fin.estado = "Finalizado"
     resultado = f"OK iid={incidente_id}"[:50]
     if body is not None and body.precio_base is not None:
         resultado = f"OK iid={incidente_id} p={body.precio_base}"[:50]
@@ -1132,9 +1141,6 @@ def get_incident_detail(db: Session, user: Usuario, incidente_id: int) -> Incide
     return IncidentDetailResponse(**base.model_dump(), evidencias=items)
 
 
-_ESTADOS_PERMITIDOS_CALIFICAR = frozenset({"finalizado", "pagado", "completado", "cerrado", "resuelto"})
-
-
 def crear_calificacion(
     db: Session,
     incidente_id: int,
@@ -1143,63 +1149,23 @@ def crear_calificacion(
     *,
     client_ip: str | None,
 ) -> CalificacionResponse:
-    """Cliente dueño: una sola calificación por incidente, solo si el servicio está cerrado (finalizado o pagado)."""
-    inc = db.execute(
-        select(Incidente).options(selectinload(Incidente.vehiculo)).where(Incidente.id == incidente_id),
-    ).scalar_one_or_none()
-    if inc is None or inc.vehiculo is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Incidente no encontrado.")
-
-    if not _is_cliente(current_user):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Solo los clientes pueden calificar un servicio.",
-        )
-    if inc.vehiculo.id_usuario != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No autorizado para calificar este incidente.",
-        )
-
-    key = _estado_incidente_cancellation_key(inc)
-    if key not in _ESTADOS_PERMITIDOS_CALIFICAR:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Solo se puede calificar un incidente finalizado o pagado.",
-        )
-
-    existing = (
-        db.scalars(select(Calificacion).where(Calificacion.id_incidente == incidente_id).order_by(Calificacion.id.desc()))
-        .first()
-    )
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Este incidente ya tiene una calificación.",
-        )
-
-    row = Calificacion(
-        id_incidente=incidente_id,
-        puntuacion=data.puntuacion,
-        comentario=data.comentario,
-    )
-    db.add(row)
-    registrar_bitacora(
+    """Alias del flujo principal POST …/calificacion (misma lógica por `id_asignacion`)."""
+    req = CalificacionCreateRequest(puntuacion=data.puntuacion, comentario=data.comentario)
+    out = create_calificacion_for_cliente(
         db,
-        id_usuario=current_user.id,
-        modulo=AUDIT_MODULE_INCIDENTES_SERVICIOS,
-        accion=AUDIT_ACTION_INCIDENTE_CALIFICADO,
-        ip=client_ip,
-        resultado=f"OK iid={incidente_id} pts={data.puntuacion}"[:50],
+        incidente_id=incidente_id,
+        body=req,
+        current_user=current_user,
+        client_ip=client_ip,
     )
-    db.commit()
-    db.refresh(row)
     return CalificacionResponse(
-        id=row.id,
-        incidente_id=row.id_incidente,
-        puntuacion=row.puntuacion,
-        comentario=row.comentario,
-        fecha=row.fecha,
+        id=out.id,
+        id_asignacion=out.id_asignacion,
+        incidente_id=out.incidente_id,
+        puntuacion=out.puntuacion,
+        comentario=out.comentario,
+        fecha=out.fecha,
+        mensaje=out.mensaje,
     )
 
 
@@ -1331,6 +1297,14 @@ def confirm_assignment_endpoint(
         )
     inc.estado = "Asignado"
     inc.tecnico_id = int(tid)
+    db.add(
+        AsignacionServicio(
+            id_incidente=incidente_id,
+            id_taller=int(row.id_taller),
+            id_mecanico=int(tid),
+            estado="Asignado",
+        ),
+    )
     insertar_notificacion_por_incidente(
         db,
         incidente_id,
@@ -1388,6 +1362,14 @@ def override_assignment_endpoint(
         )
     inc.estado = "Asignado"
     inc.tecnico_id = body.tecnico_id
+    db.add(
+        AsignacionServicio(
+            id_incidente=incidente_id,
+            id_taller=int(body.taller_id),
+            id_mecanico=int(body.tecnico_id),
+            estado="Asignado",
+        ),
+    )
     insertar_notificacion_por_incidente(
         db,
         incidente_id,

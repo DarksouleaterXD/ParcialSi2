@@ -189,7 +189,9 @@ class CalificacionCreate(BaseModel):
 
 class CalificacionResponse(BaseModel):
     id: int
+    id_asignacion: int
     incidente_id: int
     puntuacion: int
     comentario: str | None
     fecha: datetime | None
+    mensaje: str = "Calificación registrada correctamente."

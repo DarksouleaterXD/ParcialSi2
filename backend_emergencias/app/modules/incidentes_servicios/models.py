@@ -32,7 +32,12 @@ class Incidente(Base):
 
     vehiculo = relationship("Vehiculo", back_populates="incidentes", foreign_keys=[id_vehiculo])
     evidencias = relationship("Evidencia", back_populates="incidente", lazy="selectin", cascade="all, delete-orphan")
-    calificacion = relationship("Calificacion", back_populates="incidente", uselist=False, cascade="all, delete-orphan")
+    asignaciones_servicio = relationship(
+        "AsignacionServicio",
+        back_populates="incidente",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
 
 
 class Evidencia(Base):
@@ -48,18 +53,48 @@ class Evidencia(Base):
     incidente = relationship("Incidente", back_populates="evidencias")
 
 
+class AsignacionServicio(Base):
+    """Servicio atendido (taller + mecánico) vinculado al incidente (script SQL / Neon)."""
+
+    __tablename__ = "asignacionservicio"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_incidente = Column(Integer, ForeignKey("incidente.id", ondelete="RESTRICT"), nullable=False)
+    id_taller = Column(Integer, ForeignKey("taller.id", ondelete="RESTRICT"), nullable=False)
+    id_mecanico = Column(Integer, ForeignKey("usuario.id", ondelete="RESTRICT"), nullable=False)
+    costo_estimado = Column("costoestimado", Numeric(10, 2), nullable=True)
+    distancia_km = Column("distanciakm", Numeric(8, 2), nullable=True)
+    tiempo_llegada = Column("tiempollegada", Integer, nullable=True)
+    estado = Column(String(50), nullable=True, default="Asignado")
+    fecha_creacion = Column("fechacreacion", DateTime, server_default=func.now(), nullable=True)
+    fecha_aceptacion = Column("fechaaceptacion", DateTime, nullable=True)
+    fecha_fin = Column("fechafin", DateTime, nullable=True)
+    motivo_rechazo = Column("motivorechazo", Text, nullable=True)
+    trabajo_realizado = Column("trabajorealizado", Text, nullable=True)
+    costo_final = Column("costofinal", Numeric(10, 2), nullable=True)
+    obs_mecanico = Column("obsmecanico", Text, nullable=True)
+
+    incidente = relationship("Incidente", back_populates="asignaciones_servicio")
+    calificacion = relationship("Calificacion", back_populates="asignacion", uselist=False, cascade="all, delete-orphan")
+
+
 class Calificacion(Base):
-    """Valoración del cliente al cierre del servicio (1:1 con incidente en este despliegue)."""
+    """Valoración 1–5 del cliente; 1:1 con la fila de `AsignacionServicio`."""
 
     __tablename__ = "calificacion"
 
-    id = Column(Integer, primary_key=True)
-    id_incidente = Column(Integer, ForeignKey("incidente.id", ondelete="CASCADE"), nullable=False, unique=True)
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    id_asignacion = Column(
+        Integer,
+        ForeignKey("asignacionservicio.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
     puntuacion = Column(Integer, nullable=False)
     comentario = Column(Text)
     fecha = Column(DateTime, server_default=func.now(), nullable=False)
 
-    incidente = relationship("Incidente", back_populates="calificacion")
+    asignacion = relationship("AsignacionServicio", back_populates="calificacion")
 
 
 class IncidenteTallerCandidato(Base):

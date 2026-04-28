@@ -6,12 +6,13 @@ from datetime import date, datetime, time
 from fastapi import HTTPException, status
 from pydantic import ValidationError
 from sqlalchemy import case, func, or_, select
-from sqlalchemy.exc import IntegrityError, ProgrammingError
+from sqlalchemy.exc import IntegrityError, ProgrammingError, SQLAlchemyError
 from sqlalchemy.orm import Session, aliased, selectinload
 
 from app.modules.incidentes_servicios.calificaciones_schemas import (
     CalificacionAdminFilters,
     CalificacionCreateRequest,
+    CalificacionCreateResponse,
     CalificacionItemResponse,
     CalificacionListResponse,
     CalificacionListSummary,
@@ -22,7 +23,7 @@ from app.modules.incidentes_servicios.calificaciones_schemas import (
     TallerRef,
     TecnicoRef,
 )
-from app.modules.incidentes_servicios.models import Calificacion, Incidente
+from app.modules.incidentes_servicios.models import AsignacionServicio, Calificacion, Incidente
 from app.modules.pagos.models import Pago
 from app.modules.sistema.bitacora_service import AUDIT_MODULE_INCIDENTES_SERVICIOS, registrar_bitacora
 from app.modules.taller_tecnico.models import MecanicoTaller, Taller
@@ -30,18 +31,16 @@ from app.modules.usuario_autenticacion.models import Usuario, Vehiculo
 
 logger = logging.getLogger(__name__)
 
-_ESTADOS_CALIFICABLES = frozenset({"finalizado", "pagado", "completado", "cerrado", "resuelto"})
-_PAGO_OK = frozenset(
+_FINAL_ESTADOS_ASIGNACION = frozenset(
     {
-        "pagado",
-        "confirmado",
+        "finalizado",
+        "finalizada",
         "completado",
-        "paid",
-        "succeeded",
-        "complete",
-        "completed",
-        "exitoso",
-        "exitosa",
+        "cerrado",
+        "resuelto",
+        "pagado",
+        "terminado",
+        "terminada",
     },
 )
 
@@ -75,10 +74,47 @@ def _txt(v: object | None) -> str:
     return str(v).strip()
 
 
+def _asignacion_finalizada(asi: AsignacionServicio) -> bool:
+    if asi.fecha_fin is not None:
+        return True
+    return _estado_key(asi.estado) in _FINAL_ESTADOS_ASIGNACION
+
+
+def _latest_asignacion(db: Session, incidente_id: int) -> AsignacionServicio | None:
+    return (
+        db.scalars(
+            select(AsignacionServicio)
+            .where(AsignacionServicio.id_incidente == incidente_id)
+            .order_by(AsignacionServicio.id.desc()),
+        ).first()
+    )
+
+
+def _get_tecnico_context(
+    db: Session,
+    tecnico_ids: set[int],
+) -> tuple[dict[int, Usuario], dict[int, Taller]]:
+    if not tecnico_ids:
+        return {}, {}
+    tech_rows = db.execute(select(Usuario).where(Usuario.id.in_(tecnico_ids))).scalars().all()
+    tech_map = {u.id: u for u in tech_rows}
+    taller_rows = db.execute(
+        select(MecanicoTaller.id_usuario, Taller)
+        .join(Taller, Taller.id == MecanicoTaller.id_taller)
+        .where(MecanicoTaller.id_usuario.in_(tecnico_ids))
+        .order_by(MecanicoTaller.id_usuario, Taller.id),
+    ).all()
+    taller_map: dict[int, Taller] = {}
+    for tecnico_id, taller in taller_rows:
+        taller_map.setdefault(int(tecnico_id), taller)
+    return tech_map, taller_map
+
+
 def _build_calificacion_item(
     *,
     cal: Calificacion,
     inc: Incidente,
+    asignacion: AsignacionServicio,
     cli: Usuario,
     pago: Pago | None,
     tecnico_user: Usuario | None,
@@ -91,6 +127,7 @@ def _build_calificacion_item(
     pago_estado = _txt(pago.estado) if pago is not None else ""
     return CalificacionItemResponse(
         id=int(cal.id),
+        id_asignacion=int(asignacion.id),
         servicio_id=servicio_id,
         incidente_id=inc.id,
         puntuacion=int(cal.puntuacion),
@@ -134,26 +171,6 @@ def _build_calificacion_item(
     )
 
 
-def _get_tecnico_context(
-    db: Session,
-    tecnico_ids: set[int],
-) -> tuple[dict[int, Usuario], dict[int, Taller]]:
-    if not tecnico_ids:
-        return {}, {}
-    tech_rows = db.execute(select(Usuario).where(Usuario.id.in_(tecnico_ids))).scalars().all()
-    tech_map = {u.id: u for u in tech_rows}
-    taller_rows = db.execute(
-        select(MecanicoTaller.id_usuario, Taller)
-        .join(Taller, Taller.id == MecanicoTaller.id_taller)
-        .where(MecanicoTaller.id_usuario.in_(tecnico_ids))
-        .order_by(MecanicoTaller.id_usuario, Taller.id)
-    ).all()
-    taller_map: dict[int, Taller] = {}
-    for tecnico_id, taller in taller_rows:
-        taller_map.setdefault(int(tecnico_id), taller)
-    return tech_map, taller_map
-
-
 def create_calificacion_for_cliente(
     db: Session,
     *,
@@ -161,7 +178,7 @@ def create_calificacion_for_cliente(
     body: CalificacionCreateRequest,
     current_user: Usuario,
     client_ip: str | None,
-) -> CalificacionItemResponse:
+) -> CalificacionCreateResponse:
     try:
         return _create_calificacion_for_cliente_impl(
             db,
@@ -173,22 +190,14 @@ def create_calificacion_for_cliente(
     except HTTPException:
         raise
     except ProgrammingError as exc:
-        logger.exception(
-            "Calificación: error SQL (tabla/columna ausente?). incidente_id=%s",
-            incidente_id,
-        )
-        hint = (getattr(exc, "orig", None) or exc)
+        logger.exception("Calificación: ProgrammingError incidente_id=%s", incidente_id)
+        hint = getattr(exc, "orig", None) or exc
         hint_s = str(hint).strip()
         if len(hint_s) > 350:
             hint_s = hint_s[:350] + "…"
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=(
-                "Error al acceder a la tabla de calificaciones en la base de datos. "
-                "Revisá GET /health/db (calificacion_table_exists) y en Render: "
-                "`RUN_DB_MIGRATIONS_ON_STARTUP=true` o `alembic upgrade head` con la misma DATABASE_URL. "
-                f"Detalle: {hint_s}"
-            ),
+            detail=f"Error SQL al registrar la calificación. Detalle: {hint_s}",
         ) from exc
     except Exception:
         logger.exception("Error inesperado al crear calificación (incidente_id=%s)", incidente_id)
@@ -205,7 +214,7 @@ def _create_calificacion_for_cliente_impl(
     body: CalificacionCreateRequest,
     current_user: Usuario,
     client_ip: str | None,
-) -> CalificacionItemResponse:
+) -> CalificacionCreateResponse:
     inc = db.execute(
         select(Incidente)
         .options(selectinload(Incidente.vehiculo))
@@ -216,27 +225,38 @@ def _create_calificacion_for_cliente_impl(
     if not _is_cliente(current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo clientes pueden calificar.")
     if inc.vehiculo.id_usuario != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No autorizado para calificar este servicio.")
-    if _estado_key(inc.estado) not in _ESTADOS_CALIFICABLES:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Solo se puede calificar un servicio finalizado.")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No tienes permiso para calificar este servicio.",
+        )
 
-    # Usar .first(): si hay varias filas (esquema antiguo sin UNIQUE), scalar_one_or_none() lanza MultipleResultsFound → 500.
-    pago = (
-        db.scalars(select(Pago).where(Pago.incidente_id == incidente_id).order_by(Pago.id.desc()))
-        .first()
-    )
-    if pago is not None and _estado_key(pago.estado) not in _PAGO_OK:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El pago asociado aún no está confirmado.")
+    asignacion = _latest_asignacion(db, incidente_id)
+    if asignacion is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No existe una asignación de servicio para este incidente.",
+        )
+    if not _asignacion_finalizada(asignacion):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El servicio debe estar finalizado para poder calificar.",
+        )
 
     existing = (
-        db.scalars(select(Calificacion).where(Calificacion.id_incidente == incidente_id).order_by(Calificacion.id.desc()))
-        .first()
+        db.scalars(
+            select(Calificacion)
+            .where(Calificacion.id_asignacion == asignacion.id)
+            .order_by(Calificacion.id.desc()),
+        ).first()
     )
     if existing is not None:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Este servicio ya tiene una calificación.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Este servicio ya fue calificado.",
+        )
 
     row = Calificacion(
-        id_incidente=incidente_id,
+        id_asignacion=asignacion.id,
         puntuacion=body.puntuacion,
         comentario=body.comentario,
     )
@@ -247,7 +267,7 @@ def _create_calificacion_for_cliente_impl(
         modulo=AUDIT_MODULE_INCIDENTES_SERVICIOS,
         accion="CREAR_CALIFICACION",
         ip=client_ip,
-        resultado=f"OK iid={incidente_id} pts={body.puntuacion}"[:50],
+        resultado=f"OK aid={asignacion.id} pts={body.puntuacion}"[:50],
     )
     try:
         db.commit()
@@ -256,15 +276,23 @@ def _create_calificacion_for_cliente_impl(
         logger.exception("Calificacion integrity error (duplicate or FK)")
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="No se pudo guardar la calificación (conflicto en base de datos).",
+            detail="Este servicio ya fue calificado.",
         ) from None
-    except ProgrammingError as exc:
+    except ProgrammingError:
         db.rollback()
-        logger.exception("Calificacion programming error (schema mismatch?)")
+        logger.exception("Calificacion programming error on commit")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="El servidor no tiene el esquema de calificaciones aplicado. Ejecutá las migraciones Alembic en la base de datos.",
-        ) from exc
+            detail="Esquema de base de datos incompatible con esta versión del servidor.",
+        ) from None
+    except SQLAlchemyError:
+        db.rollback()
+        logger.exception("Calificacion SQLAlchemyError on commit")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="No se pudo guardar la calificación.",
+        ) from None
+
     db.refresh(row)
 
     inc_after = db.execute(
@@ -272,28 +300,38 @@ def _create_calificacion_for_cliente_impl(
     ).scalar_one_or_none()
     if inc_after is None:
         inc_after = inc
+    asignacion_after = db.get(AsignacionServicio, asignacion.id)
+    if asignacion_after is None:
+        asignacion_after = asignacion
+
     pago_after = (
-        db.scalars(select(Pago).where(Pago.incidente_id == incidente_id).order_by(Pago.id.desc()))
-        .first()
+        db.scalars(select(Pago).where(Pago.incidente_id == incidente_id).order_by(Pago.id.desc())).first()
     )
 
     cli = db.get(Usuario, current_user.id)
     if cli is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no encontrado.")
 
-    tecnico_ids = {inc_after.tecnico_id} if inc_after.tecnico_id is not None else set()
+    mid = asignacion_after.id_mecanico
+    tecnico_ids = {mid} if mid is not None else set()
     tech_map, taller_map = _get_tecnico_context(db, tecnico_ids)
+    taller_direct = db.get(Taller, asignacion_after.id_taller)
+    if taller_direct is not None:
+        taller_map[mid] = taller_direct
+
     try:
-        return _build_calificacion_item(
+        base = _build_calificacion_item(
             cal=row,
             inc=inc_after,
+            asignacion=asignacion_after,
             cli=cli,
             pago=pago_after,
-            tecnico_user=tech_map.get(inc_after.tecnico_id) if inc_after.tecnico_id is not None else None,
-            tecnico_taller=taller_map.get(inc_after.tecnico_id) if inc_after.tecnico_id is not None else None,
+            tecnico_user=tech_map.get(mid) if mid is not None else None,
+            tecnico_taller=taller_map.get(mid) if mid is not None else None,
         )
+        return CalificacionCreateResponse(**base.model_dump(), mensaje="Calificación registrada correctamente.")
     except ValidationError:
-        logger.exception("CalificacionItemResponse validation failed")
+        logger.exception("CalificacionCreateResponse validation failed")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="La calificación se guardó pero hubo un error al armar la respuesta. Recargá el incidente.",
@@ -311,8 +349,9 @@ def list_calificaciones_mias(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo clientes pueden consultar sus calificaciones.")
 
     base = (
-        select(Calificacion, Incidente, Usuario, Pago)
-        .join(Incidente, Incidente.id == Calificacion.id_incidente)
+        select(Calificacion, Incidente, Usuario, AsignacionServicio, Pago)
+        .join(AsignacionServicio, AsignacionServicio.id == Calificacion.id_asignacion)
+        .join(Incidente, Incidente.id == AsignacionServicio.id_incidente)
         .join(Vehiculo, Vehiculo.id == Incidente.id_vehiculo)
         .join(Usuario, Usuario.id == Vehiculo.id_usuario)
         .outerjoin(Pago, Pago.incidente_id == Incidente.id)
@@ -322,32 +361,39 @@ def list_calificaciones_mias(
         db.scalar(
             select(func.count(Calificacion.id))
             .select_from(Calificacion)
-            .join(Incidente, Incidente.id == Calificacion.id_incidente)
+            .join(AsignacionServicio, AsignacionServicio.id == Calificacion.id_asignacion)
+            .join(Incidente, Incidente.id == AsignacionServicio.id_incidente)
             .join(Vehiculo, Vehiculo.id == Incidente.id_vehiculo)
             .where(Vehiculo.id_usuario == current_user.id),
         )
-        or 0
+        or 0,
     )
     rows = db.execute(
         base.order_by(Calificacion.fecha.desc(), Calificacion.id.desc()).offset((page - 1) * page_size).limit(page_size),
     ).all()
-    tecnico_ids = {inc.tecnico_id for _, inc, _, _ in rows if inc.tecnico_id is not None}
+    tecnico_ids = {asi.id_mecanico for _, _, _, asi, _ in rows if asi.id_mecanico is not None}
     tech_map, taller_map = _get_tecnico_context(db, tecnico_ids)
+    for _, _, _, asi, _ in rows:
+        tid = asi.id_mecanico
+        td = db.get(Taller, asi.id_taller)
+        if td is not None and tid is not None:
+            taller_map[tid] = td
     items = [
         _build_calificacion_item(
             cal=cal,
             inc=inc,
+            asignacion=asi,
             cli=cli,
             pago=pago,
-            tecnico_user=tech_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
-            tecnico_taller=taller_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
+            tecnico_user=tech_map.get(asi.id_mecanico) if asi.id_mecanico is not None else None,
+            tecnico_taller=taller_map.get(asi.id_mecanico) if asi.id_mecanico is not None else None,
         )
-        for cal, inc, cli, pago in rows
+        for cal, inc, cli, asi, pago in rows
     ]
     return CalificacionListResponse(items=items, page=page, page_size=page_size, total=total)
 
 
-def _build_admin_conditions(filters: CalificacionAdminFilters):
+def _build_admin_conditions(filters: CalificacionAdminFilters, *, mec: Usuario):
     conditions = []
     if filters.puntuacion is not None:
         conditions.append(Calificacion.puntuacion == filters.puntuacion)
@@ -370,27 +416,18 @@ def _build_admin_conditions(filters: CalificacionAdminFilters):
                 Usuario.email.ilike(term, escape="\\"),
             ),
         )
-    tecnico_alias = aliased(Usuario)
     if filters.tecnico and filters.tecnico.strip():
         term_t = _ilike_fragment_escaped(filters.tecnico[:120])
         conditions.append(
             or_(
-                tecnico_alias.nombre.ilike(term_t, escape="\\"),
-                tecnico_alias.apellido.ilike(term_t, escape="\\"),
+                mec.nombre.ilike(term_t, escape="\\"),
+                mec.apellido.ilike(term_t, escape="\\"),
             ),
         )
     if filters.taller and filters.taller.strip():
         term_w = _ilike_fragment_escaped(filters.taller[:120])
-        conditions.append(
-            select(MecanicoTaller.id_usuario)
-            .join(Taller, Taller.id == MecanicoTaller.id_taller)
-            .where(
-                MecanicoTaller.id_usuario == Incidente.tecnico_id,
-                Taller.nombre.ilike(term_w, escape="\\"),
-            )
-            .exists(),
-        )
-    return conditions, tecnico_alias
+        conditions.append(Taller.nombre.ilike(term_w, escape="\\"))
+    return conditions
 
 
 def list_calificaciones_admin(
@@ -403,15 +440,18 @@ def list_calificaciones_admin(
 ) -> CalificacionListResponse:
     if not _is_admin(current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores.")
-    conditions, tecnico_alias = _build_admin_conditions(filters)
+    mec = aliased(Usuario)
+    conditions = _build_admin_conditions(filters, mec=mec)
 
     count_stmt = (
         select(func.count(Calificacion.id))
         .select_from(Calificacion)
-        .join(Incidente, Incidente.id == Calificacion.id_incidente)
+        .join(AsignacionServicio, AsignacionServicio.id == Calificacion.id_asignacion)
+        .join(Incidente, Incidente.id == AsignacionServicio.id_incidente)
         .join(Vehiculo, Vehiculo.id == Incidente.id_vehiculo)
         .join(Usuario, Usuario.id == Vehiculo.id_usuario)
-        .outerjoin(tecnico_alias, tecnico_alias.id == Incidente.tecnico_id)
+        .join(mec, mec.id == AsignacionServicio.id_mecanico)
+        .join(Taller, Taller.id == AsignacionServicio.id_taller)
     )
     if conditions:
         count_stmt = count_stmt.where(*conditions)
@@ -427,10 +467,12 @@ def list_calificaciones_admin(
             func.sum(case((Calificacion.puntuacion == 5, 1), else_=0)).label("c5"),
         )
         .select_from(Calificacion)
-        .join(Incidente, Incidente.id == Calificacion.id_incidente)
+        .join(AsignacionServicio, AsignacionServicio.id == Calificacion.id_asignacion)
+        .join(Incidente, Incidente.id == AsignacionServicio.id_incidente)
         .join(Vehiculo, Vehiculo.id == Incidente.id_vehiculo)
         .join(Usuario, Usuario.id == Vehiculo.id_usuario)
-        .outerjoin(tecnico_alias, tecnico_alias.id == Incidente.tecnico_id)
+        .join(mec, mec.id == AsignacionServicio.id_mecanico)
+        .join(Taller, Taller.id == AsignacionServicio.id_taller)
     )
     if conditions:
         summary_stmt = summary_stmt.where(*conditions)
@@ -445,12 +487,14 @@ def list_calificaciones_admin(
     )
 
     list_stmt = (
-        select(Calificacion, Incidente, Usuario, Pago)
-        .join(Incidente, Incidente.id == Calificacion.id_incidente)
+        select(Calificacion, Incidente, Usuario, AsignacionServicio, Pago)
+        .join(AsignacionServicio, AsignacionServicio.id == Calificacion.id_asignacion)
+        .join(Incidente, Incidente.id == AsignacionServicio.id_incidente)
         .join(Vehiculo, Vehiculo.id == Incidente.id_vehiculo)
         .join(Usuario, Usuario.id == Vehiculo.id_usuario)
         .outerjoin(Pago, Pago.incidente_id == Incidente.id)
-        .outerjoin(tecnico_alias, tecnico_alias.id == Incidente.tecnico_id)
+        .join(mec, mec.id == AsignacionServicio.id_mecanico)
+        .join(Taller, Taller.id == AsignacionServicio.id_taller)
     )
     if conditions:
         list_stmt = list_stmt.where(*conditions)
@@ -458,18 +502,24 @@ def list_calificaciones_admin(
         list_stmt.order_by(Calificacion.fecha.desc(), Calificacion.id.desc()).offset((page - 1) * page_size).limit(page_size),
     ).all()
 
-    tecnico_ids = {inc.tecnico_id for _, inc, _, _ in rows if inc.tecnico_id is not None}
+    tecnico_ids = {asi.id_mecanico for _, _, _, asi, _ in rows if asi.id_mecanico is not None}
     tech_map, taller_map = _get_tecnico_context(db, tecnico_ids)
+    for cal, inc, cli, asi, _pago in rows:
+        tid = asi.id_mecanico
+        td = db.get(Taller, asi.id_taller)
+        if td is not None and tid is not None:
+            taller_map[tid] = td
     items = [
         _build_calificacion_item(
             cal=cal,
             inc=inc,
+            asignacion=asi,
             cli=cli,
             pago=pago,
-            tecnico_user=tech_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
-            tecnico_taller=taller_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
+            tecnico_user=tech_map.get(asi.id_mecanico) if asi.id_mecanico is not None else None,
+            tecnico_taller=taller_map.get(asi.id_mecanico) if asi.id_mecanico is not None else None,
         )
-        for cal, inc, cli, pago in rows
+        for cal, inc, cli, asi, pago in rows
     ]
     return CalificacionListResponse(items=items, page=page, page_size=page_size, total=total, summary=summary)
 
@@ -482,24 +532,31 @@ def get_calificacion_admin_detail(
 ) -> CalificacionItemResponse:
     if not _is_admin(current_user):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Solo administradores.")
+    mec = aliased(Usuario)
     row = db.execute(
-        select(Calificacion, Incidente, Usuario, Pago)
-        .join(Incidente, Incidente.id == Calificacion.id_incidente)
+        select(Calificacion, Incidente, Usuario, AsignacionServicio, Pago)
+        .join(AsignacionServicio, AsignacionServicio.id == Calificacion.id_asignacion)
+        .join(Incidente, Incidente.id == AsignacionServicio.id_incidente)
         .join(Vehiculo, Vehiculo.id == Incidente.id_vehiculo)
         .join(Usuario, Usuario.id == Vehiculo.id_usuario)
         .outerjoin(Pago, Pago.incidente_id == Incidente.id)
+        .join(mec, mec.id == AsignacionServicio.id_mecanico)
         .where(Calificacion.id == calificacion_id),
     ).one_or_none()
     if row is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Calificación no encontrada.")
-    cal, inc, cli, pago = row
-    tecnico_ids = {inc.tecnico_id} if inc.tecnico_id is not None else set()
+    cal, inc, cli, asi, pago = row
+    tecnico_ids = {asi.id_mecanico} if asi.id_mecanico is not None else set()
     tech_map, taller_map = _get_tecnico_context(db, tecnico_ids)
+    td = db.get(Taller, asi.id_taller)
+    if td is not None and asi.id_mecanico is not None:
+        taller_map[asi.id_mecanico] = td
     return _build_calificacion_item(
         cal=cal,
         inc=inc,
+        asignacion=asi,
         cli=cli,
         pago=pago,
-        tecnico_user=tech_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
-        tecnico_taller=taller_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
+        tecnico_user=tech_map.get(asi.id_mecanico) if asi.id_mecanico is not None else None,
+        tecnico_taller=taller_map.get(asi.id_mecanico) if asi.id_mecanico is not None else None,
     )

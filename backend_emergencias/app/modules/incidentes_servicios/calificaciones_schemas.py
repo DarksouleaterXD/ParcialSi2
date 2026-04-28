@@ -55,6 +55,7 @@ class PagoRef(BaseModel):
 
 class CalificacionItemResponse(BaseModel):
     id: int
+    id_asignacion: int
     servicio_id: int
     incidente_id: int
     puntuacion: int
@@ -66,6 +67,10 @@ class CalificacionItemResponse(BaseModel):
     servicio: ServicioRef | None = None
     incidente: IncidenteRef | None = None
     pago: PagoRef | None = None
+
+
+class CalificacionCreateResponse(CalificacionItemResponse):
+    mensaje: str = "Calificación registrada correctamente."
 
 
 class CalificacionListSummary(BaseModel):

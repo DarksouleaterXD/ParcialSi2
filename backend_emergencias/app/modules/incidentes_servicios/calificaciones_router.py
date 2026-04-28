@@ -8,6 +8,7 @@ from app.core.database import get_db
 from app.modules.incidentes_servicios.calificaciones_schemas import (
     CalificacionAdminFilters,
     CalificacionCreateRequest,
+    CalificacionCreateResponse,
     CalificacionItemResponse,
     CalificacionListResponse,
 )
@@ -30,14 +31,14 @@ def _client_ip(request: Request) -> str | None:
     return None
 
 
-@router.post("/{incidente_id}/calificacion", response_model=CalificacionItemResponse, summary="Calificar servicio (cliente)")
+@router.post("/{incidente_id}/calificacion", response_model=CalificacionCreateResponse, summary="Calificar servicio (cliente)")
 def create_calificacion(
     incidente_id: int,
     body: CalificacionCreateRequest,
     request: Request,
     db: Session = Depends(get_db),
     user: Usuario = Depends(get_current_user),
-) -> CalificacionItemResponse:
+) -> CalificacionCreateResponse:
     return create_calificacion_for_cliente(
         db,
         incidente_id=incidente_id,
