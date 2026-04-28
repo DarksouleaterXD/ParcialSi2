@@ -21,10 +21,12 @@ logger = logging.getLogger(__name__)
 
 # Modelos de respaldo si el principal agota cuota (ResourceExhausted) o falla.
 _DEFAULT_GEMINI_FALLBACKS: tuple[str, ...] = (
+    "gemini-2.0-flash-001",
     "gemini-2.0-flash-lite",
-    "gemini-1.5-flash-8b",
-    "gemini-1.5-flash",
-    "gemini-1.5-pro",
+    "gemini-2.0-flash-lite-001",
+    "gemini-flash-latest",
+    "gemini-flash-lite-latest",
+    "gemini-2.5-flash",
 )
 
 
@@ -46,6 +48,14 @@ def _is_quota_or_resource_error(exc: BaseException) -> bool:
         return True
     msg = str(exc).lower()
     return "429" in msg or "resource exhausted" in msg or "quota" in msg or "rate limit" in msg
+
+
+def _failure_tag_from_error(exc: BaseException | None, *, saw_quota_error: bool) -> str:
+    if saw_quota_error:
+        return "gemini-failed:QuotaExceeded"
+    if exc is None:
+        return "gemini-failed:Unknown"
+    return f"gemini-failed:{type(exc).__name__}"
 
 _JSON_INSTRUCTION = """
 Analizá un incidente vehicular de emergencia. Respondé SOLO un JSON válido (sin markdown) con exactamente estas claves:
@@ -191,6 +201,7 @@ def analyze_with_google(
         parts.append({"mime_type": mime, "data": data})
 
     last_err: BaseException | None = None
+    saw_quota_error = False
     timeout_s = float(settings.ai_request_timeout_seconds or 60.0)
     executor = ThreadPoolExecutor(max_workers=1)
     try:
@@ -219,6 +230,7 @@ def analyze_with_google(
                 except BaseException as exc:
                     last_err = exc
                     if _is_quota_or_resource_error(exc):
+                        saw_quota_error = True
                         logger.warning(
                             "Gemini cuota/límite en modelo %s: %s — probando otro modelo",
                             model_name,
@@ -232,4 +244,4 @@ def analyze_with_google(
     assert last_err is not None
     logger.error("Gemini: agotados modelos y reintentos, usando heurística local. Último error: %s", last_err)
     r = _fallback_local_result(descripcion_sanitizada, has_audio=has_audio, has_photo=has_photo)
-    return (r, "local_fallback", f"gemini-failed:{type(last_err).__name__}")
+    return (r, "local_fallback", _failure_tag_from_error(last_err, saw_quota_error=saw_quota_error))

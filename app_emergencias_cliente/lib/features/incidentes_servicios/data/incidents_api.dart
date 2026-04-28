@@ -1,6 +1,6 @@
 import 'package:http/http.dart' as http;
 
-import '../../../core/authorized_client.dart';
+import '../../../core/authorized_client.dart' show ApiClientException, AuthorizedClient;
 import '../domain/incident.dart';
 import 'incident_dto.dart';
 
@@ -40,6 +40,18 @@ class IncidentsApi {
   Future<IncidentDetail> getIncident(int incidenteId) async {
     final json = await _client.getJson('$_base/incidentes/$incidenteId');
     return IncidentDetail.fromJson(json);
+  }
+
+  /// Último análisis IA estructurado (`GET …/analisis-ia`). `null` si aún no hay registro (404).
+  Future<Map<String, dynamic>?> getLastAnalisisIa(int incidenteId) async {
+    try {
+      return await _client.getJson('$_base/$incidenteId/analisis-ia');
+    } on ApiClientException catch (e) {
+      if (e.statusCode == 404) {
+        return null;
+      }
+      rethrow;
+    }
   }
 
   Future<IncidentDetail> cancelIncident(int incidenteId) async {

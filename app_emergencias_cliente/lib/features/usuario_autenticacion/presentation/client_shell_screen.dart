@@ -15,6 +15,7 @@ import '../data/vehicles_api.dart';
 import 'client_home_tab.dart';
 import 'profile_screen.dart';
 import 'session_navigation.dart';
+import '../../incidentes_servicios/data/incidents_api.dart';
 import '../../incidentes_servicios/offline/pending_incident_sync_service.dart';
 import '../../incidentes_servicios/offline/pending_incidents_store.dart';
 import '../../incidentes_servicios/presentation/pending_outbox_screen.dart';
@@ -355,6 +356,7 @@ class _ClientShellScreenState extends State<ClientShellScreen> {
             onSessionExpired: _goToLogin,
             onOpenVehicles: () => setState(() => _slot = 1),
             onOpenIncidents: () => setState(() => _slot = 3),
+            incidentsApi: widget.isTechnician ? null : IncidentsApi(_authorized),
             onAddVehicle: _openCreateVehicle,
             onReportEmergency: widget.isTechnician ? null : _openReportEmergency,
             isTechnician: widget.isTechnician,
