@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, Body, Depends, File, Form, Header, Query, Request, Response, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, Form, Header, Query, Request, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -44,7 +44,6 @@ from app.modules.incidentes_servicios.services import (
     marcar_en_proceso,
     override_assignment_endpoint,
     rechazar_solicitud,
-    run_enrich_incident_with_ai_task,
     trigger_ia_process_endpoint,
 )
 from app.modules.usuario_autenticacion.models import Usuario
@@ -127,6 +126,8 @@ Crea un incidente **Pendiente** para el vehículo indicado.
 
 **Response:** `201` primera creación; `200` replay con misma clave y mismo cuerpo.
 
+**IA (Gemini):** no se dispara automáticamente aquí para no analizar sin fotos/audio que el cliente sube después. Tras adjuntar evidencias, el cliente debe llamar `POST /incidentes/{id}/ia/process?force=true` (lo hace la app móvil al finalizar el asistente) o el alta de cada evidencia puede disparar reproceso según versión del cliente.
+
 **Errores:** 403 si no es cliente o el vehículo no es propio; 404 si el vehículo no existe; 409 si el vehículo ya tiene incidente activo o clave idempotente con cuerpo distinto; 422 clave inválida.
 """,
 )
@@ -134,7 +135,6 @@ def create_incident(
     body: IncidentCreateRequest,
     request: Request,
     response: Response,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: Usuario = Depends(get_current_user),
     idempotency_key: Annotated[str | None, Header(alias="Idempotency-Key")] = None,
@@ -147,13 +147,6 @@ def create_incident(
         idempotency_key_raw=idempotency_key,
     )
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-    if created:
-        background_tasks.add_task(
-            run_enrich_incident_with_ai_task,
-            out.id,
-            user.id,
-            _client_ip(request),
-        )
     return out
 
 
@@ -179,7 +172,6 @@ async def attach_evidence(
     incidente_id: int,
     request: Request,
     response: Response,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     user: Usuario = Depends(get_current_user),
     tipo: str = Form(..., description="foto | audio | texto"),
@@ -202,14 +194,6 @@ async def attach_evidence(
         client_ip=_client_ip(request),
     )
     response.status_code = status.HTTP_201_CREATED if created else status.HTTP_200_OK
-    if created:
-        background_tasks.add_task(
-            run_enrich_incident_with_ai_task,
-            incidente_id,
-            user.id,
-            _client_ip(request),
-            force=True,
-        )
     return out
 
 

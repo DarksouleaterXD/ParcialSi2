@@ -1132,7 +1132,7 @@ def get_incident_detail(db: Session, user: Usuario, incidente_id: int) -> Incide
     return IncidentDetailResponse(**base.model_dump(), evidencias=items)
 
 
-_ESTADOS_PERMITIDOS_CALIFICAR = frozenset({"finalizado", "pagado"})
+_ESTADOS_PERMITIDOS_CALIFICAR = frozenset({"finalizado", "pagado", "completado", "cerrado", "resuelto"})
 
 
 def crear_calificacion(
@@ -1168,7 +1168,10 @@ def crear_calificacion(
             detail="Solo se puede calificar un incidente finalizado o pagado.",
         )
 
-    existing = db.execute(select(Calificacion).where(Calificacion.id_incidente == incidente_id)).scalar_one_or_none()
+    existing = (
+        db.scalars(select(Calificacion).where(Calificacion.id_incidente == incidente_id).order_by(Calificacion.id.desc()))
+        .first()
+    )
     if existing is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

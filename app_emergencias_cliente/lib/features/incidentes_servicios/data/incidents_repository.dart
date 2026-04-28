@@ -240,6 +240,13 @@ class IncidentsRepository {
       );
     }
 
+    await runEvidence(
+      'Análisis automático (Gemini)',
+      () async {
+        await _api.triggerIaProcess(created.id, force: true);
+      },
+    );
+
     final detail = await _api.getIncidentById(created.id);
     return SubmitIncidentOutcome(detail: detail, warnings: warnings);
   }

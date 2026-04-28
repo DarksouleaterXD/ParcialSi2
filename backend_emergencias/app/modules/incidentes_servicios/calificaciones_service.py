@@ -202,11 +202,18 @@ def _create_calificacion_for_cliente_impl(
     if _estado_key(inc.estado) not in _ESTADOS_CALIFICABLES:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Solo se puede calificar un servicio finalizado.")
 
-    pago = db.execute(select(Pago).where(Pago.incidente_id == incidente_id)).scalar_one_or_none()
+    # Usar .first(): si hay varias filas (esquema antiguo sin UNIQUE), scalar_one_or_none() lanza MultipleResultsFound → 500.
+    pago = (
+        db.scalars(select(Pago).where(Pago.incidente_id == incidente_id).order_by(Pago.id.desc()))
+        .first()
+    )
     if pago is not None and _estado_key(pago.estado) not in _PAGO_OK:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El pago asociado aún no está confirmado.")
 
-    existing = db.execute(select(Calificacion).where(Calificacion.id_incidente == incidente_id)).scalar_one_or_none()
+    existing = (
+        db.scalars(select(Calificacion).where(Calificacion.id_incidente == incidente_id).order_by(Calificacion.id.desc()))
+        .first()
+    )
     if existing is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Este servicio ya tiene una calificación.")
 
@@ -242,16 +249,30 @@ def _create_calificacion_for_cliente_impl(
         ) from exc
     db.refresh(row)
 
-    tecnico_ids = {inc.tecnico_id} if inc.tecnico_id is not None else set()
+    inc_after = db.execute(
+        select(Incidente).options(selectinload(Incidente.vehiculo)).where(Incidente.id == incidente_id),
+    ).scalar_one_or_none()
+    if inc_after is None:
+        inc_after = inc
+    pago_after = (
+        db.scalars(select(Pago).where(Pago.incidente_id == incidente_id).order_by(Pago.id.desc()))
+        .first()
+    )
+
+    cli = db.get(Usuario, current_user.id)
+    if cli is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no encontrado.")
+
+    tecnico_ids = {inc_after.tecnico_id} if inc_after.tecnico_id is not None else set()
     tech_map, taller_map = _get_tecnico_context(db, tecnico_ids)
     try:
         return _build_calificacion_item(
             cal=row,
-            inc=inc,
-            cli=current_user,
-            pago=pago,
-            tecnico_user=tech_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
-            tecnico_taller=taller_map.get(inc.tecnico_id) if inc.tecnico_id is not None else None,
+            inc=inc_after,
+            cli=cli,
+            pago=pago_after,
+            tecnico_user=tech_map.get(inc_after.tecnico_id) if inc_after.tecnico_id is not None else None,
+            tecnico_taller=taller_map.get(inc_after.tecnico_id) if inc_after.tecnico_id is not None else None,
         )
     except ValidationError:
         logger.exception("CalificacionItemResponse validation failed")

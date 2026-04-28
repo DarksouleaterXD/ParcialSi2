@@ -53,11 +53,38 @@ class BitacoraEventCreate(BaseModel):
     client_ip: str | None = Field(default=None, max_length=45)
     outcome: str | None = Field(default=None, max_length=50)
 
-    @field_validator("module", "action", "outcome", mode="before")
+    @field_validator("module", mode="before")
     @classmethod
-    def strip_strings(cls, v: object) -> object:
+    def _module(cls, v: object) -> object:
         if isinstance(v, str):
-            return v.strip()
+            return v.strip()[:50]
+        return v
+
+    @field_validator("action", mode="before")
+    @classmethod
+    def _action(cls, v: object) -> object:
+        if isinstance(v, str):
+            return v.strip()[:100]
+        return v
+
+    @field_validator("outcome", mode="before")
+    @classmethod
+    def _outcome(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s[:50] if s else None
+        return v
+
+    @field_validator("client_ip", mode="before")
+    @classmethod
+    def _client_ip(cls, v: object) -> object:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            s = v.strip()
+            return s[:45] if s else None
         return v
 
 

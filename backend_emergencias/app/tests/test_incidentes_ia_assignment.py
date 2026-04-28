@@ -27,6 +27,14 @@ def _hdr(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}", "Idempotency-Key": f"idem-{uuid.uuid4().hex}"}
 
 
+def _post_ia_process(client, token: str, incidente_id: int) -> None:
+    res = client.post(
+        f"/api/incidentes-servicios/incidentes/{incidente_id}/ia/process?force=true",
+        headers=_hdr(token),
+    )
+    assert res.status_code == 200
+
+
 def _new_vehiculo_cliente() -> int:
     engine = app.state.test_engine
     Session = sessionmaker(bind=engine)
@@ -143,6 +151,7 @@ def test_low_confidence_sets_manual_review(client, monkeypatch):
     )
     assert r.status_code == 201
     iid = r.json()["id"]
+    _post_ia_process(client, token, iid)
     engine = app.state.test_engine
     Session = sessionmaker(bind=engine)
     db = Session()
@@ -171,6 +180,7 @@ def test_confirm_assignment_admin(client):
     )
     assert r.status_code == 201
     iid = r.json()["id"]
+    _post_ia_process(client, token_c, iid)
     engine = app.state.test_engine
     Session = sessionmaker(bind=engine)
     db = Session()
@@ -244,6 +254,7 @@ def test_override_admin_after_manual_review(client, monkeypatch):
     )
     assert r.status_code == 201
     iid = r.json()["id"]
+    _post_ia_process(client, token_c, iid)
     token_a = _login(client, "login-test@example.com")
     ov = client.post(
         f"/api/incidentes-servicios/incidentes/{iid}/asignacion/override",
@@ -266,6 +277,7 @@ def test_ia_reprocess_idempotent_no_duplicate_sugerida(client):
     )
     assert r.status_code == 201
     iid = r.json()["id"]
+    _post_ia_process(client, token_c, iid)
 
     def count_asign_sugerida() -> int:
         engine = app.state.test_engine

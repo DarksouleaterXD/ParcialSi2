@@ -30,6 +30,15 @@ def _hdr(token: str, *, idempotency_key: str | None = None) -> dict[str, str]:
     return h
 
 
+def _post_ia_process(client, token: str, incidente_id: int) -> None:
+    """El pipeline IA ya no se dispara en POST /incidentes ni en evidencias; el cliente llama a este endpoint."""
+    res = client.post(
+        f"/api/incidentes-servicios/incidentes/{incidente_id}/ia/process?force=true",
+        headers=_hdr(token),
+    )
+    assert res.status_code == 200
+
+
 def _new_vehiculo_cliente() -> int:
     """Un vehículo nuevo por llamada (evita 409 por incidente activo previo)."""
     engine = app.state.test_engine
@@ -94,6 +103,7 @@ def test_create_incident_with_text_classifies_and_prioritizes(client):
     )
     assert res.status_code == 201
     iid = res.json()["id"]
+    _post_ia_process(client, token, iid)
     assert _count_ai_bitacora(AUDIT_ACTION_IA_PROCESADA) == before_ok + 1
     inc = _get_incident(iid)
     assert inc is not None
@@ -117,7 +127,9 @@ def test_create_incident_battery_spanish(client):
         headers=_hdr(token),
     )
     assert res.status_code == 201
-    inc = _get_incident(res.json()["id"])
+    iid = res.json()["id"]
+    _post_ia_process(client, token, iid)
+    inc = _get_incident(iid)
     assert inc is not None
     assert inc.categoria_ia == "Batería"
     assert inc.prioridad_ia == "ALTA"
@@ -136,7 +148,6 @@ def test_add_audio_recomputes_enrichment(client):
     iid = r1.json()["id"]
     inc0 = _get_incident(iid)
     assert inc0 is not None
-    assert inc0.categoria_ia == "Otro"
     fake_mp3 = b"\xff" * 200
     r2 = client.post(
         f"/api/incidentes-servicios/incidentes/{iid}/evidencias",
@@ -145,6 +156,7 @@ def test_add_audio_recomputes_enrichment(client):
         headers=_hdr(token),
     )
     assert r2.status_code == 201
+    _post_ia_process(client, token, iid)
     inc = _get_incident(iid)
     assert inc is not None
     assert inc.categoria_ia == "Motor"
@@ -173,8 +185,10 @@ def test_ia_failure_incident_still_created_and_bitacora_failed(monkeypatch: pyte
         headers=_hdr(token),
     )
     assert res.status_code == 201
+    iid = res.json()["id"]
+    _post_ia_process(client, token, iid)
     assert _count_ai_bitacora(AUDIT_ACTION_IA_FALLIDA) == before_fail + 1
-    inc = _get_incident(res.json()["id"])
+    inc = _get_incident(iid)
     assert inc is not None
     assert (inc.estado or "").strip().lower() == "revision manual"
     assert (inc.ai_status or "").lower() == "failed"
@@ -190,8 +204,10 @@ def test_create_without_description_enriches_with_default_stub(client):
         headers=_hdr(token),
     )
     assert res.status_code == 201
+    iid = res.json()["id"]
+    _post_ia_process(client, token, iid)
     assert _count_ai_bitacora(AUDIT_ACTION_IA_PROCESADA) == before_ok + 1
-    inc = _get_incident(res.json()["id"])
+    inc = _get_incident(iid)
     assert inc is not None
     assert inc.categoria_ia == "Otro"
     assert inc.prioridad_ia == "BAJA"

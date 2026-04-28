@@ -160,6 +160,11 @@ class PendingIncidentSyncService {
       }
 
       if (w.isComplete) {
+        try {
+          await api.triggerIaProcess(incidenteId, force: true);
+        } on ApiClientException {
+          // El borrador ya está enviado; la IA se puede reintentar desde el detalle del incidente.
+        } catch (_) {}
         await _store.delete(w.localId);
         return true;
       }

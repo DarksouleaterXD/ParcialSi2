@@ -298,3 +298,18 @@ def test_admin_detalle_calificacion(client):
     res = client.get(f"/api/admin/incidentes-servicios/calificaciones/{cid}", headers=_hdr(token_admin))
     assert res.status_code == 200
     assert res.json()["id"] == cid
+
+
+def test_bitacora_event_create_truncates_client_ip_and_outcome():
+    from app.modules.sistema.bitacora_service import BitacoraEventCreate
+
+    long_ip = "127.0.0.1, " + "1.2.3.4, " * 30
+    e = BitacoraEventCreate(
+        user_id=1,
+        module="pagos",
+        action="TEST",
+        client_ip=long_ip,
+        outcome="x" * 80,
+    )
+    assert len(e.client_ip or "") <= 45
+    assert len(e.outcome or "") <= 50

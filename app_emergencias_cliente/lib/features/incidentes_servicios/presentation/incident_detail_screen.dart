@@ -1048,6 +1048,41 @@ class _IncidentDetailScreenState extends State<IncidentDetailScreen> {
                     ),
               ),
             ),
+            const SizedBox(height: AppSpacing.lg),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: _accentOrange,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                onPressed: () {
+                  unawaited(
+                    Navigator.of(context).push<void>(
+                      MaterialPageRoute<void>(
+                        builder: (_) => CalificacionScreen(
+                          storage: widget.storage,
+                          incidenteId: widget.incidenteId,
+                          onSessionExpired: widget.onSessionExpired,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.star_rate_rounded),
+                label: const Text('Calificación de servicio'),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Podés valorar la atención cuando quieras; tu opinión nos ayuda a mejorar.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF166534).withValues(alpha: 0.85),
+                    height: 1.35,
+                  ),
+            ),
           ],
         ),
       ),

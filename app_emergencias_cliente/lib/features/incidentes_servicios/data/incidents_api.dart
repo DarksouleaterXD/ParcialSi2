@@ -80,6 +80,15 @@ class IncidentsApi {
     return IncidentDetail.fromJson(json);
   }
 
+  /// Dispara el pipeline de IA (Gemini multimodal: texto, fotos y audio ya persistidos).
+  Future<Map<String, dynamic>> triggerIaProcess(int incidenteId, {bool force = true}) async {
+    final q = force ? 'force=true' : 'force=false';
+    return _client.postJson(
+      '$_base/incidentes/$incidenteId/ia/process?$q',
+      body: <String, dynamic>{},
+    );
+  }
+
   Future<Map<String, dynamic>> calificarIncidente(
     int incidenteId, {
     required int puntuacion,
