@@ -172,6 +172,19 @@ def create_calificacion_for_cliente(
         )
     except HTTPException:
         raise
+    except ProgrammingError as exc:
+        logger.exception(
+            "Calificación: error SQL (tabla/columna ausente?). incidente_id=%s",
+            incidente_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=(
+                "La base de datos no tiene aplicada la tabla de calificaciones. "
+                "En el servidor (Render) ejecutá migraciones: `alembic upgrade head` "
+                "(incluye la revisión 007_calificacion_incidente)."
+            ),
+        ) from exc
     except Exception:
         logger.exception("Error inesperado al crear calificación (incidente_id=%s)", incidente_id)
         raise HTTPException(
